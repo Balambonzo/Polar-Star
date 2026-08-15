@@ -1,4 +1,5 @@
 import Foundation
+//test
 
 /// Unifica i giorni completati e i dati del giorno (minuti totali, foto)
 /// su qualunque combinazione di attività scelte — è la base condivisa da

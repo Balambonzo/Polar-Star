@@ -84,6 +84,7 @@ enum FriendLookupService {
     // MARK: - Cercare un profilo pubblico
 
     static func lookupFriend(byCode code: String) async throws -> FriendProfile? {
+        await ensureSignedIn()
         let snapshot = try await db.collection("profiles").document(code).getDocument()
         guard snapshot.exists, let data = snapshot.data() else { return nil }
         return friendProfile(from: data, fallbackCode: code)
@@ -121,6 +122,7 @@ enum FriendLookupService {
     // MARK: - Richieste di amicizia
 
     static func sendFriendRequest(fromCode: String, fromUsername: String, toCode: String) async throws {
+        await ensureSignedIn()
         let requestID = "\(fromCode)_\(toCode)"
         let data: [String: Any] = [
             "from": fromCode,
@@ -134,6 +136,7 @@ enum FriendLookupService {
 
     /// Richieste ricevute e ancora senza risposta.
     static func fetchIncomingRequests(myCode: String) async throws -> [FriendRequest] {
+        await ensureSignedIn()
         let snapshot = try await db.collection("friendRequests")
             .whereField("to", isEqualTo: myCode)
             .whereField("status", isEqualTo: "pending")
@@ -143,6 +146,7 @@ enum FriendLookupService {
 
     /// Richieste che ho inviato io e che sono state accettate.
     static func fetchAcceptedSentRequests(myCode: String) async throws -> [FriendRequest] {
+        await ensureSignedIn()
         let snapshot = try await db.collection("friendRequests")
             .whereField("from", isEqualTo: myCode)
             .whereField("status", isEqualTo: "accepted")
@@ -151,12 +155,14 @@ enum FriendLookupService {
     }
 
     static func respondToRequest(requestID: String, accept: Bool) async throws {
+        await ensureSignedIn()
         try await db.collection("friendRequests").document(requestID)
             .setData(["status": accept ? "accepted" : "declined"], merge: true)
     }
     /// Cancella il profilo pubblico da Firestore — va chiamata quando
         /// l'utente elimina l'account, prima di cancellare i dati locali.
         static func deleteProfile(friendCode: String) async throws {
+            await ensureSignedIn()
             try await db.collection("profiles").document(friendCode).delete()
         }
 

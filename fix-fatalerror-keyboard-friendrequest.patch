@@ -1,0 +1,132 @@
+diff --git a/Full Focus/AddFriendView.swift b/Full Focus/AddFriendView.swift
+index 70e86ae..207a8fb 100644
+--- a/Full Focus/AddFriendView.swift	
++++ b/Full Focus/AddFriendView.swift	
+@@ -67,6 +67,7 @@ struct AddFriendView: View {
+             .navigationTitle("Add Friend")
+             .navigationBarTitleDisplayMode(.inline)
+             .toolbarColorScheme(.dark, for: .navigationBar)
++            .dismissKeyboardOnTap()
+             .toolbar {
+                 ToolbarItem(placement: .topBarTrailing) {
+                     Button("Close") { dismiss() }
+diff --git a/Full Focus/AppModelContainer.swift b/Full Focus/AppModelContainer.swift
+index 83ec7f1..6685b61 100644
+--- a/Full Focus/AppModelContainer.swift	
++++ b/Full Focus/AppModelContainer.swift	
+@@ -7,10 +7,36 @@ enum AppModelContainer {
+     static let shared: ModelContainer = {
+         let schema = Schema([StudyEntry.self, UserProfile.self, Friend.self, TrainingEntry.self, CustomActivityEntry.self, Book.self, ReadingSession.self])
+         let config = ModelConfiguration(schema: schema)
++
++        if let container = try? ModelContainer(for: schema, configurations: [config]) {
++            return container
++        }
++
++        // Lo store esistente non è più leggibile (es. corrotto dopo un
++        // update, o migrazione fallita). Invece di crashare sempre
++        // all'avvio, lo eliminiamo e ripartiamo da uno store vuoto:
++        // l'utente perde lo storico locale, ma l'app resta usabile.
++        print("⚠️ AppModelContainer: store non leggibile, provo a ricrearlo da zero.")
++        deleteExistingStore(at: config.url)
++
+         do {
+             return try ModelContainer(for: schema, configurations: [config])
+         } catch {
+-            fatalError("Impossible to create the container \(error)")
++            // Anche dopo il reset non si riesce a creare il container:
++            // a questo punto è un problema di sistema (es. disco pieno
++            // o permessi), non recuperabile qui.
++            fatalError("Impossible to create the container even after reset: \(error)")
+         }
+     }()
++
++    private static func deleteExistingStore(at url: URL) {
++        let fileManager = FileManager.default
++        // SwiftData/SQLite usa 3 file affiancati: il -wal e -shm vanno
++        // rimossi insieme al file principale o la nuova apertura fallisce.
++        let suffixes = ["", "-wal", "-shm"]
++        for suffix in suffixes {
++            let fileURL = URL(fileURLWithPath: url.path + suffix)
++            try? fileManager.removeItem(at: fileURL)
++        }
++    }
+ }
+diff --git a/Full Focus/CloudKitService.swift b/Full Focus/CloudKitService.swift
+index 5c1c39b..4b11b0c 100644
+--- a/Full Focus/CloudKitService.swift	
++++ b/Full Focus/CloudKitService.swift	
+@@ -84,6 +84,7 @@ enum FriendLookupService {
+     // MARK: - Cercare un profilo pubblico
+ 
+     static func lookupFriend(byCode code: String) async throws -> FriendProfile? {
++        await ensureSignedIn()
+         let snapshot = try await db.collection("profiles").document(code).getDocument()
+         guard snapshot.exists, let data = snapshot.data() else { return nil }
+         return friendProfile(from: data, fallbackCode: code)
+@@ -121,6 +122,7 @@ enum FriendLookupService {
+     // MARK: - Richieste di amicizia
+ 
+     static func sendFriendRequest(fromCode: String, fromUsername: String, toCode: String) async throws {
++        await ensureSignedIn()
+         let requestID = "\(fromCode)_\(toCode)"
+         let data: [String: Any] = [
+             "from": fromCode,
+@@ -134,6 +136,7 @@ enum FriendLookupService {
+ 
+     /// Richieste ricevute e ancora senza risposta.
+     static func fetchIncomingRequests(myCode: String) async throws -> [FriendRequest] {
++        await ensureSignedIn()
+         let snapshot = try await db.collection("friendRequests")
+             .whereField("to", isEqualTo: myCode)
+             .whereField("status", isEqualTo: "pending")
+@@ -143,6 +146,7 @@ enum FriendLookupService {
+ 
+     /// Richieste che ho inviato io e che sono state accettate.
+     static func fetchAcceptedSentRequests(myCode: String) async throws -> [FriendRequest] {
++        await ensureSignedIn()
+         let snapshot = try await db.collection("friendRequests")
+             .whereField("from", isEqualTo: myCode)
+             .whereField("status", isEqualTo: "accepted")
+@@ -151,12 +155,14 @@ enum FriendLookupService {
+     }
+ 
+     static func respondToRequest(requestID: String, accept: Bool) async throws {
++        await ensureSignedIn()
+         try await db.collection("friendRequests").document(requestID)
+             .setData(["status": accept ? "accepted" : "declined"], merge: true)
+     }
+     /// Cancella il profilo pubblico da Firestore — va chiamata quando
+         /// l'utente elimina l'account, prima di cancellare i dati locali.
+         static func deleteProfile(friendCode: String) async throws {
++            await ensureSignedIn()
+             try await db.collection("profiles").document(friendCode).delete()
+         }
+ 
+diff --git a/Full Focus/DimissKeyboard.swift b/Full Focus/DimissKeyboard.swift
+index cd416bb..aa45189 100644
+--- a/Full Focus/DimissKeyboard.swift	
++++ b/Full Focus/DimissKeyboard.swift	
+@@ -2,11 +2,18 @@ import SwiftUI
+ import UIKit
+ 
+ extension View {
++    /// Chiude la tastiera solo quando il tocco arriva su uno sfondo vuoto.
++    /// A differenza di un semplice `.simultaneousGesture` applicato all'intera
++    /// view, questo layer sta DIETRO al contenuto: SwiftUI lo consulta solo
++    /// per i tocchi che non vengono già intercettati da bottoni, TextField o
++    /// altri controlli sopra di esso, che quindi restano invariati.
+     func dismissKeyboardOnTap() -> some View {
+-        self.simultaneousGesture(
+-            TapGesture().onEnded {
+-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+-            }
++        self.background(
++            Color.clear
++                .contentShape(Rectangle())
++                .onTapGesture {
++                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
++                }
+         )
+     }
+ }

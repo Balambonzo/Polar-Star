@@ -1,0 +1,12 @@
+// Copia questo file in "Config.xcconfig" (senza .example) e inserisci la
+// tua chiave vera. Config.xcconfig è in .gitignore e non verrà mai committato.
+//
+// Setup one-time in Xcode:
+// 1. Project Navigator -> seleziona il progetto "Full Focus" (icona blu in cima)
+// 2. Seleziona il PROJECT (non il target) -> tab "Info"
+// 3. In "Configurations", per Debug e Release, sotto il target "Full Focus"
+//    imposta "Config" come Configuration File (Add File... -> scegli Config.xcconfig)
+// 4. Fai clean build. Da questo momento GOOGLE_BOOKS_API_KEY sovrascrive
+//    il valore vuoto già presente nel progetto.
+
+GOOGLE_BOOKS_API_KEY = LA_TUA_CHIAVE_QUI

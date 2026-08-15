@@ -1,0 +1,124 @@
+diff --git a/.gitignore b/.gitignore
+index e617d8d..471bc5c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,3 +4,6 @@ node_modules/
+ __pycache__/
+ *.pyc
+ .DS_Store
++
++# Secrets locali - non committare mai
++Config.xcconfig
+diff --git a/Config.xcconfig.example b/Config.xcconfig.example
+new file mode 100644
+index 0000000..78552c6
+--- /dev/null
++++ b/Config.xcconfig.example
+@@ -0,0 +1,12 @@
++// Copia questo file in "Config.xcconfig" (senza .example) e inserisci la
++// tua chiave vera. Config.xcconfig è in .gitignore e non verrà mai committato.
++//
++// Setup one-time in Xcode:
++// 1. Project Navigator -> seleziona il progetto "Full Focus" (icona blu in cima)
++// 2. Seleziona il PROJECT (non il target) -> tab "Info"
++// 3. In "Configurations", per Debug e Release, sotto il target "Full Focus"
++//    imposta "Config" come Configuration File (Add File... -> scegli Config.xcconfig)
++// 4. Fai clean build. Da questo momento GOOGLE_BOOKS_API_KEY sovrascrive
++//    il valore vuoto già presente nel progetto.
++
++GOOGLE_BOOKS_API_KEY = LA_TUA_CHIAVE_QUI
+diff --git a/Full Focus.xcodeproj/project.pbxproj b/Full Focus.xcodeproj/project.pbxproj
+index 3f4e767..0c3c994 100644
+--- a/Full Focus.xcodeproj/project.pbxproj	
++++ b/Full Focus.xcodeproj/project.pbxproj	
+@@ -468,9 +468,12 @@
+ 				ENABLE_PREVIEWS = YES;
+ 				GENERATE_INFOPLIST_FILE = YES;
+ 				INFOPLIST_FILE = "Full-Focus-Info.plist";
++				GOOGLE_BOOKS_API_KEY = "";
+ 				INFOPLIST_KEY_CFBundleDisplayName = LodeStar;
++				INFOPLIST_KEY_GoogleBooksAPIKey = "$(GOOGLE_BOOKS_API_KEY)";
+ 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+-				INFOPLIST_KEY_NSCameraUsageDescription = "Servono le foto!";
++				INFOPLIST_KEY_NSCameraUsageDescription = "Full Focus usa la fotocamera per scattare la foto giornaliera che documenta il tuo streak.";
++				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Full Focus accede alla libreria foto come alternativa alla fotocamera per la foto giornaliera del tuo streak.";
+ 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+ 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+ 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+@@ -510,9 +513,12 @@
+ 				ENABLE_PREVIEWS = YES;
+ 				GENERATE_INFOPLIST_FILE = YES;
+ 				INFOPLIST_FILE = "Full-Focus-Info.plist";
++				GOOGLE_BOOKS_API_KEY = "";
+ 				INFOPLIST_KEY_CFBundleDisplayName = LodeStar;
++				INFOPLIST_KEY_GoogleBooksAPIKey = "$(GOOGLE_BOOKS_API_KEY)";
+ 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+-				INFOPLIST_KEY_NSCameraUsageDescription = "Servono le foto!";
++				INFOPLIST_KEY_NSCameraUsageDescription = "Full Focus usa la fotocamera per scattare la foto giornaliera che documenta il tuo streak.";
++				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Full Focus accede alla libreria foto come alternativa alla fotocamera per la foto giornaliera del tuo streak.";
+ 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+ 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+ 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+diff --git a/Full Focus/ISBNLookupService.swift b/Full Focus/ISBNLookupService.swift
+index 8927e8f..aa56819 100644
+--- a/Full Focus/ISBNLookupService.swift	
++++ b/Full Focus/ISBNLookupService.swift	
+@@ -9,7 +9,18 @@ enum ISBNLookupService {
+         let coverURL: String?
+     }
+ 
+-    private static let googleBooksAPIKey = "AIzaSyDr-12Ld_vEGRnNREtMiVpLoSXhcaoTtzM"
++    /// Letta da Info.plist (chiave "GoogleBooksAPIKey"), a sua volta valorizzata
++    /// dalla build setting GOOGLE_BOOKS_API_KEY definita in Config.xcconfig
++    /// (file NON versionato, vedi Config.xcconfig.example). In questo modo la
++    /// chiave reale non finisce mai nel repository git.
++    private static let googleBooksAPIKey: String = {
++        guard let key = Bundle.main.object(forInfoDictionaryKey: "GoogleBooksAPIKey") as? String,
++              !key.isEmpty else {
++            assertionFailure("GoogleBooksAPIKey mancante: configura Config.xcconfig, vedi Config.xcconfig.example")
++            return ""
++        }
++        return key
++    }()
+ 
+     static func lookup(isbn: String) async -> BookInfo? {
+         if let result = await lookupOpenLibrary(isbn: isbn) {
+@@ -47,6 +58,7 @@ enum ISBNLookupService {
+     }
+ 
+     private static func lookupGoogleBooks(isbn: String) async -> BookInfo? {
++        guard !googleBooksAPIKey.isEmpty else { return nil }
+         guard let url = URL(string: "https://www.googleapis.com/books/v1/volumes?q=isbn:\(isbn)&key=\(googleBooksAPIKey)") else { return nil }
+ 
+         do {
+diff --git a/firestore/firestore.rules b/firestore/firestore.rules
+new file mode 100644
+index 0000000..9ef06c2
+--- /dev/null
++++ b/firestore/firestore.rules
+@@ -0,0 +1,25 @@
++rules_version = '2';
++service cloud.firestore {
++  match /databases/{database}/documents {
++
++    // Profili pubblici: chiunque autenticato può leggere i campi base
++    // (serve per la ricerca via friend code), ma solo il proprietario
++    // può scrivere il proprio documento.
++    match /profiles/{friendCode} {
++      allow read: if request.auth != null;
++      allow write: if request.auth != null
++                   && request.auth.uid == resource.data.ownerUID;
++      allow create: if request.auth != null
++                    && request.auth.uid == request.resource.data.ownerUID;
++    }
++
++    // Richieste di amicizia: solo mittente e destinatario coinvolti
++    // possono leggere/scrivere una specifica richiesta.
++    match /friendRequests/{requestId} {
++      allow read, write: if request.auth != null;
++      // Nota: per un controllo più stretto servirebbe salvare anche
++      // gli UID (non solo i friend code) di from/to nel documento,
++      // e confrontarli con request.auth.uid qui.
++    }
++  }
++}

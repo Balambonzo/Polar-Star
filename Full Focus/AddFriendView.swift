@@ -67,6 +67,7 @@ struct AddFriendView: View {
             .navigationTitle("Add Friend")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .dismissKeyboardOnTap()
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Close") { dismiss() }

@@ -8,8 +8,18 @@ enum ISBNLookupService {
         let totalPages: Int
         let coverURL: String?
     }
-
-    private static let googleBooksAPIKey = ""
+    /// Letta da Info.plist (chiave "GoogleBooksAPIKey"), a sua volta valorizzata
+    /// dalla build setting GOOGLE_BOOKS_API_KEY definita in Config.xcconfig
+    /// (file NON versionato, vedi Config.xcconfig.example). In questo modo la
+    /// chiave reale non finisce mai nel repository git.
+    private static let googleBooksAPIKey: String = {
+        guard let key = Bundle.main.object(forInfoDictionaryKey: "GoogleBooksAPIKey") as? String,
+              !key.isEmpty else {
+            assertionFailure("GoogleBooksAPIKey mancante: configura Config.xcconfig, vedi Config.xcconfig.example")
+            return ""
+        }
+        return key
+    }()
 
     static func lookup(isbn: String) async -> BookInfo? {
         if let result = await lookupOpenLibrary(isbn: isbn) {
@@ -47,6 +57,7 @@ enum ISBNLookupService {
     }
 
     private static func lookupGoogleBooks(isbn: String) async -> BookInfo? {
+        guard !googleBooksAPIKey.isEmpty else { return nil }
         guard let url = URL(string: "https://www.googleapis.com/books/v1/volumes?q=isbn:\(isbn)&key=\(googleBooksAPIKey)") else { return nil }
 
         do {

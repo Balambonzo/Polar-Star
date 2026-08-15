@@ -13,6 +13,7 @@
 		D32105A530270A7A006443A7 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = D32105A430270A7A006443A7 /* FirebaseAuth */; };
 		D32105A730270A7A006443A7 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = D32105A630270A7A006443A7 /* FirebaseCore */; };
 		D32105A930270A7A006443A7 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = D32105A830270A7A006443A7 /* FirebaseFirestore */; };
+		D3F649AA3030709700D5646D /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = D3F649A93030709700D5646D /* Config.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,6 +46,7 @@
 		D321057B30268725006443A7 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		D321059330268735006443A7 /* FullFocusWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FullFocusWidgetExtension.entitlements; sourceTree = "<group>"; };
 		D3D224F030244897000D0213 /* Full Focus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Full Focus.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D3F649A93030709700D5646D /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -122,6 +124,7 @@
 				D321057D30268725006443A7 /* FullFocusWidget */,
 				D321057830268725006443A7 /* Frameworks */,
 				D3D224F130244897000D0213 /* Products */,
+				D3F649A93030709700D5646D /* Config.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -239,6 +242,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D3F649AA3030709700D5646D /* Config.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -290,8 +294,9 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.albotosco.fullfocus.beta.FullFocusWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.albotosco.polarstar.FullFocusWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -322,8 +327,9 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.albotosco.fullfocus.beta.FullFocusWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.albotosco.polarstar.FullFocusWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -457,6 +463,7 @@
 		};
 		D3D224FC30244899000D0213 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D3F649A93030709700D5646D /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -467,10 +474,13 @@
 				DEVELOPMENT_TEAM = Y2HDYA4TQ3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				GOOGLE_BOOKS_API_KEY = "";
 				INFOPLIST_FILE = "Full-Focus-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = LodeStar;
+				INFOPLIST_KEY_GoogleBooksAPIKey = "$(GOOGLE_BOOKS_API_KEY)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Servono le foto!";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Full Focus usa la fotocamera per scattare la foto giornaliera che documenta il tuo streak.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Full Focus accede alla libreria foto come alternativa alla fotocamera per la foto giornaliera del tuo streak.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -484,7 +494,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.albotosco.fullfocus.beta;
+				PRODUCT_BUNDLE_IDENTIFIER = com.albotosco.polarstar;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -499,6 +509,7 @@
 		};
 		D3D224FD30244899000D0213 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D3F649A93030709700D5646D /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -509,10 +520,13 @@
 				DEVELOPMENT_TEAM = Y2HDYA4TQ3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				GOOGLE_BOOKS_API_KEY = "";
 				INFOPLIST_FILE = "Full-Focus-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = LodeStar;
+				INFOPLIST_KEY_GoogleBooksAPIKey = "$(GOOGLE_BOOKS_API_KEY)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Servono le foto!";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Full Focus usa la fotocamera per scattare la foto giornaliera che documenta il tuo streak.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Full Focus accede alla libreria foto come alternativa alla fotocamera per la foto giornaliera del tuo streak.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -526,7 +540,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.albotosco.fullfocus.beta;
+				PRODUCT_BUNDLE_IDENTIFIER = com.albotosco.polarstar;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
