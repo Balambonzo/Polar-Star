@@ -6,11 +6,75 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D321057A30268725006443A7 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D321057930268725006443A7 /* WidgetKit.framework */; };
+		D321057C30268725006443A7 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D321057B30268725006443A7 /* SwiftUI.framework */; };
+		D321058D30268727006443A7 /* FullFocusWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D321057730268725006443A7 /* FullFocusWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D32105A530270A7A006443A7 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = D32105A430270A7A006443A7 /* FirebaseAuth */; };
+		D32105A730270A7A006443A7 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = D32105A630270A7A006443A7 /* FirebaseCore */; };
+		D32105A930270A7A006443A7 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = D32105A830270A7A006443A7 /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D321058B30268727006443A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D3D224E830244897000D0213 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D321057630268725006443A7;
+			remoteInfo = FullFocusWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D321059230268727006443A7 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				D321058D30268727006443A7 /* FullFocusWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		D321057730268725006443A7 /* FullFocusWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FullFocusWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		D321057930268725006443A7 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		D321057B30268725006443A7 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		D321059330268735006443A7 /* FullFocusWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FullFocusWidgetExtension.entitlements; sourceTree = "<group>"; };
 		D3D224F030244897000D0213 /* Full Focus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Full Focus.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D321058E30268727006443A7 /* Exceptions for "FullFocusWidget" folder in "FullFocusWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = D321057630268725006443A7 /* FullFocusWidgetExtension */;
+		};
+		D3210597302687D7006443A7 /* Exceptions for "FullFocusWidget" folder in "Full Focus" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				StreakTimelineProvider.swift,
+				WidgetSnapshotStore.swift,
+			);
+			target = D3D224EF30244897000D0213 /* Full Focus */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		D321057D30268725006443A7 /* FullFocusWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D3210597302687D7006443A7 /* Exceptions for "FullFocusWidget" folder in "Full Focus" target */,
+				D321058E30268727006443A7 /* Exceptions for "FullFocusWidget" folder in "FullFocusWidgetExtension" target */,
+			);
+			path = FullFocusWidget;
+			sourceTree = "<group>";
+		};
 		D3D224F230244897000D0213 /* Full Focus */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Full Focus";
@@ -19,20 +83,44 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		D321057430268725006443A7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D321057C30268725006443A7 /* SwiftUI.framework in Frameworks */,
+				D321057A30268725006443A7 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D3D224ED30244897000D0213 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D32105A730270A7A006443A7 /* FirebaseCore in Frameworks */,
+				D32105A530270A7A006443A7 /* FirebaseAuth in Frameworks */,
+				D32105A930270A7A006443A7 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		D321057830268725006443A7 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				D321057930268725006443A7 /* WidgetKit.framework */,
+				D321057B30268725006443A7 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		D3D224E730244897000D0213 = {
 			isa = PBXGroup;
 			children = (
+				D321059330268735006443A7 /* FullFocusWidgetExtension.entitlements */,
 				D3D224F230244897000D0213 /* Full Focus */,
+				D321057D30268725006443A7 /* FullFocusWidget */,
+				D321057830268725006443A7 /* Frameworks */,
 				D3D224F130244897000D0213 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +129,7 @@
 			isa = PBXGroup;
 			children = (
 				D3D224F030244897000D0213 /* Full Focus.app */,
+				D321057730268725006443A7 /* FullFocusWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +137,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		D321057630268725006443A7 /* FullFocusWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D321058F30268727006443A7 /* Build configuration list for PBXNativeTarget "FullFocusWidgetExtension" */;
+			buildPhases = (
+				D321057330268725006443A7 /* Sources */,
+				D321057430268725006443A7 /* Frameworks */,
+				D321057530268725006443A7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D321057D30268725006443A7 /* FullFocusWidget */,
+			);
+			name = FullFocusWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = FullFocusWidgetExtension;
+			productReference = D321057730268725006443A7 /* FullFocusWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		D3D224EF30244897000D0213 /* Full Focus */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = D3D224FB30244899000D0213 /* Build configuration list for PBXNativeTarget "Full Focus" */;
@@ -55,16 +166,21 @@
 				D3D224EC30244897000D0213 /* Sources */,
 				D3D224ED30244897000D0213 /* Frameworks */,
 				D3D224EE30244897000D0213 /* Resources */,
+				D321059230268727006443A7 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				D321058C30268727006443A7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				D3D224F230244897000D0213 /* Full Focus */,
 			);
 			name = "Full Focus";
 			packageProductDependencies = (
+				D32105A430270A7A006443A7 /* FirebaseAuth */,
+				D32105A630270A7A006443A7 /* FirebaseCore */,
+				D32105A830270A7A006443A7 /* FirebaseFirestore */,
 			);
 			productName = "Full Focus";
 			productReference = D3D224F030244897000D0213 /* Full Focus.app */;
@@ -80,6 +196,9 @@
 				LastSwiftUpdateCheck = 2660;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
+					D321057630268725006443A7 = {
+						CreatedOnToolsVersion = 26.6;
+					};
 					D3D224EF30244897000D0213 = {
 						CreatedOnToolsVersion = 26.6;
 					};
@@ -94,17 +213,28 @@
 			);
 			mainGroup = D3D224E730244897000D0213;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D32105A330270A7A006443A7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D3D224F130244897000D0213 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				D3D224EF30244897000D0213 /* Full Focus */,
+				D321057630268725006443A7 /* FullFocusWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		D321057530268725006443A7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D3D224EE30244897000D0213 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +245,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		D321057330268725006443A7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D3D224EC30244897000D0213 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,7 +261,79 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		D321058C30268727006443A7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D321057630268725006443A7 /* FullFocusWidgetExtension */;
+			targetProxy = D321058B30268727006443A7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		D321059030268727006443A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = FullFocusWidgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y2HDYA4TQ3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FullFocusWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FullFocusWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.albotosco.fullfocus.beta.FullFocusWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D321059130268727006443A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = FullFocusWidgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y2HDYA4TQ3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FullFocusWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FullFocusWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.albotosco.fullfocus.beta.FullFocusWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		D3D224F930244899000D0213 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -251,23 +460,33 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Full Focus/Full Focus.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = Y2HDYA4TQ3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Full-Focus-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = LodeStar;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Servono le foto!";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDarkContent;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "tosco.Full-Focus";
+				PRODUCT_BUNDLE_IDENTIFIER = com.albotosco.fullfocus.beta;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -283,23 +502,33 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Full Focus/Full Focus.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = Y2HDYA4TQ3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Full-Focus-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = LodeStar;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Servono le foto!";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDarkContent;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "tosco.Full-Focus";
+				PRODUCT_BUNDLE_IDENTIFIER = com.albotosco.fullfocus.beta;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -313,6 +542,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		D321058F30268727006443A7 /* Build configuration list for PBXNativeTarget "FullFocusWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D321059030268727006443A7 /* Debug */,
+				D321059130268727006443A7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		D3D224EB30244897000D0213 /* Build configuration list for PBXProject "Full Focus" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -332,6 +570,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D32105A330270A7A006443A7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.17.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D32105A430270A7A006443A7 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D32105A330270A7A006443A7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		D32105A630270A7A006443A7 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D32105A330270A7A006443A7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		D32105A830270A7A006443A7 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D32105A330270A7A006443A7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D3D224E830244897000D0213 /* Project object */;
 }

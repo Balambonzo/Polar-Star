@@ -1,24 +1,38 @@
-//
-//  ContentView.swift
-//  Full Focus
-//
-//  Created by Alberto Toscano on 06/08/2026.
-//
-
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-    }
-}
+    @Query private var profiles: [UserProfile]
 
-#Preview {
-    ContentView()
+    init() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+
+    private var selectedActivities: [String] {
+        profiles.first?.selectedActivities ?? []
+    }
+
+    var body: some View {
+        TabView {
+            TodayView()
+                .tabItem { Label("Today", systemImage: "flame.fill") }
+            CollectionView()
+                .tabItem { Label("Collection", systemImage: "square.grid.3x3.fill") }
+            if selectedActivities.contains("training") {
+                TrainingView()
+                    .tabItem { Label("Training", systemImage: "figure.strengthtraining.traditional") }
+            }
+            if selectedActivities.contains("reading") {
+                LibraryView()
+                    .tabItem { Label("Bookshelf", systemImage: "books.vertical.fill") }
+            }
+            ProfileView()
+                .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
+        }
+        .tint(.orange)
+    }
 }
