@@ -9,7 +9,7 @@ enum ISBNLookupService {
         let coverURL: String?
     }
 
-    private static let googleBooksAPIKey = "AIzaSyDr-12Ld_vEGRnNREtMiVpLoSXhcaoTtzM"
+    private static let googleBooksAPIKey = ""
 
     static func lookup(isbn: String) async -> BookInfo? {
         if let result = await lookupOpenLibrary(isbn: isbn) {
