@@ -476,7 +476,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				GOOGLE_BOOKS_API_KEY = "";
 				INFOPLIST_FILE = "Full-Focus-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = LodeStar;
+				INFOPLIST_KEY_CFBundleDisplayName = PolarStar;
 				INFOPLIST_KEY_GoogleBooksAPIKey = "$(GOOGLE_BOOKS_API_KEY)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Full Focus usa la fotocamera per scattare la foto giornaliera che documenta il tuo streak.";
@@ -522,7 +522,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				GOOGLE_BOOKS_API_KEY = "";
 				INFOPLIST_FILE = "Full-Focus-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = LodeStar;
+				INFOPLIST_KEY_CFBundleDisplayName = PolarStar;
 				INFOPLIST_KEY_GoogleBooksAPIKey = "$(GOOGLE_BOOKS_API_KEY)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Full Focus usa la fotocamera per scattare la foto giornaliera che documenta il tuo streak.";

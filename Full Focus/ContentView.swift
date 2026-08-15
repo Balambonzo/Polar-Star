@@ -20,8 +20,8 @@ struct ContentView: View {
         TabView {
             TodayView()
                 .tabItem { Label("Today", systemImage: "flame.fill") }
-            CollectionView()
-                .tabItem { Label("Collection", systemImage: "square.grid.3x3.fill") }
+            ConstellationView()
+                            .tabItem { Label("Costellazione", systemImage: "sparkles") }
             if selectedActivities.contains("training") {
                 TrainingView()
                     .tabItem { Label("Training", systemImage: "figure.strengthtraining.traditional") }
