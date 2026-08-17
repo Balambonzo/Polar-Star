@@ -18,7 +18,7 @@ struct ReadingSessionSetupView: View {
 
     private var minuteOptions: [Int] {
         let minimum = profiles.first?.dailyReadingMinimumMinutes ?? 10
-        return Array(stride(from: minimum, through: minimum + 90, by: 5))
+        return Array(stride(from: minimum, through: 180, by: 5))
     }
 
     var body: some View {

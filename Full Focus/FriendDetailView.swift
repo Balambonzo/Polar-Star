@@ -58,7 +58,7 @@ struct FriendDetailView: View {
                                 .foregroundStyle(Theme.textSecondary)
                         }
                         
-                        if let path = friend.profileImagePath, let uiImage = ImageStore.load(path) {
+                        if let path = friend.latestPhotoPath, let uiImage = ImageStore.load(path) {
                             Image(uiImage: uiImage)
                                 .resizable()
                                 .scaledToFit()
@@ -74,8 +74,19 @@ struct FriendDetailView: View {
                                 .font(.subheadline.weight(.medium))
                                 .foregroundStyle(.orange)
                         }
+                        
                         .disabled(isRefreshing)
                         .padding(.top, 12)
+                        .padding(.bottom, 40)
+                        
+                        Button(role: .destructive) {
+                            removeFriend()
+                        } label: {
+                            Label("Remove friend", systemImage: "person.badge.minus")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.red)
+                        }
+                        .padding(.top, 8)
                         .padding(.bottom, 40)
                     }
                 }
@@ -119,9 +130,24 @@ struct FriendDetailView: View {
         friend.currentStreak = updated.currentStreak
         friend.bestStreak = updated.bestStreak
         friend.lastEntryDate = updated.lastEntryDate
-        if let photo = updated.latestPhoto, let fileName = ImageStore.save(photo) {
+
+        if let profileImage = updated.profileImage, let fileName = ImageStore.save(profileImage) {
             friend.profileImagePath = fileName
         }
+        if let latestPhoto = updated.latestPhoto, let fileName = ImageStore.save(latestPhoto) {
+            friend.latestPhotoPath = fileName
+        }
+
         try? modelContext.save()
+    }
+    
+    private func removeFriend() {
+        listener?.remove()
+        Task {
+            try? await FriendLookupService.removeFriendship(myCode: "UWC-7345", otherCode: friend.friendCode)
+        }
+        modelContext.delete(friend)
+        try? modelContext.save()
+        dismiss()
     }
 }

@@ -5,7 +5,17 @@ import SwiftData
 /// StudyEntry, UserProfile e Friend vivono solo sul dispositivo.
 enum AppModelContainer {
     static let shared: ModelContainer = {
-        let schema = Schema([StudyEntry.self, UserProfile.self, Friend.self, TrainingEntry.self, CustomActivityEntry.self, Book.self, ReadingSession.self])
+        let schema = Schema([
+            StudyEntry.self,
+            UserProfile.self,
+            Friend.self,
+            TrainingEntry.self,
+            TrainingExercise.self,
+            TrainingSet.self,
+            CustomActivityEntry.self,
+            Book.self,
+            ReadingSession.self
+        ])
         let config = ModelConfiguration(schema: schema)
 
         if let container = try? ModelContainer(for: schema, configurations: [config]) {

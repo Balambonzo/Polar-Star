@@ -1,3 +1,4 @@
+
 import Foundation
 import UIKit
 import FirebaseFirestore
@@ -15,6 +16,7 @@ enum FriendLookupService {
         let currentStreak: Int
         let bestStreak: Int
         let lastEntryDate: Date?
+        let profileImage: UIImage? 
         let latestPhoto: UIImage?
     }
 
@@ -41,17 +43,18 @@ enum FriendLookupService {
         }
     
     static func publishMyProfile(
-            friendCode: String,
-            username: String,
-            currentStreak: Int,
-            bestStreak: Int,
-            lastEntryDate: Date?,
-            latestPhoto: UIImage?
-        ) async throws {
-            await ensureSignedIn()
-            guard let uid = Auth.auth().currentUser?.uid else {
-                throw NSError(domain: "FriendLookupService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Non autenticato"])
-            }
+        friendCode: String,
+        username: String,
+        currentStreak: Int,
+        bestStreak: Int,
+        lastEntryDate: Date?,
+        profileImage: UIImage?,   // ← nuovo parametro
+        latestPhoto: UIImage?
+    ) async throws {
+        await ensureSignedIn()
+        guard let uid = Auth.auth().currentUser?.uid else {
+            throw NSError(domain: "FriendLookupService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Non autenticato"])
+        }
 
         var data: [String: Any] = [
             "friendCode": friendCode,
@@ -62,6 +65,9 @@ enum FriendLookupService {
         ]
         if let lastEntryDate {
             data["lastEntryDate"] = Timestamp(date: lastEntryDate)
+        }
+        if let profileImage, let jpeg = resizedJPEGData(profileImage) {
+            data["profilePhotoBase64"] = jpeg.base64EncodedString()   // ← nuovo
         }
         if let latestPhoto, let jpeg = resizedJPEGData(latestPhoto) {
             data["latestPhotoBase64"] = jpeg.base64EncodedString()
@@ -95,10 +101,15 @@ enum FriendLookupService {
     }
 
     private static func friendProfile(from data: [String: Any], fallbackCode: String) -> FriendProfile {
-        var photo: UIImage?
+        var profileImage: UIImage?
+        if let base64String = data["profilePhotoBase64"] as? String,
+           let imageData = Data(base64Encoded: base64String) {
+            profileImage = UIImage(data: imageData)
+        }
+        var latestPhoto: UIImage?
         if let base64String = data["latestPhotoBase64"] as? String,
            let imageData = Data(base64Encoded: base64String) {
-            photo = UIImage(data: imageData)
+            latestPhoto = UIImage(data: imageData)
         }
         let lastEntryDate = (data["lastEntryDate"] as? Timestamp)?.dateValue()
         return FriendProfile(
@@ -107,7 +118,8 @@ enum FriendLookupService {
             currentStreak: data["currentStreak"] as? Int ?? 0,
             bestStreak: data["bestStreak"] as? Int ?? 0,
             lastEntryDate: lastEntryDate,
-            latestPhoto: photo
+            profileImage: profileImage,   // ← nuovo
+            latestPhoto: latestPhoto
         )
     }
 
@@ -175,5 +187,13 @@ enum FriendLookupService {
             fromUsername: data["fromUsername"] as? String ?? "Amico",
             status: data["status"] as? String ?? "pending"
         )
+    }
+    
+    static func removeFriendship(myCode: String, otherCode: String) async throws {
+        await ensureSignedIn()
+        let id1 = "\(myCode)_\(otherCode)"
+        let id2 = "\(otherCode)_\(myCode)"
+        try await db.collection("friendRequests").document(id1).delete()
+        try await db.collection("friendRequests").document(id2).delete()
     }
 }

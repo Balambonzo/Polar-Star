@@ -1,5 +1,23 @@
 import UIKit
 
+
+extension ImageStore {
+    /// Come `save(_:)`, ma con un nome file specifico invece che casuale —
+    /// serve in fase di ripristino per far coincidere il filename con
+    /// quello già referenziato dalle entries scaricate dal backup.
+    @discardableResult
+    static func save(_ image: UIImage, withFileName fileName: String) -> String? {
+        let url = directory.appendingPathComponent(fileName)
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
+        do {
+            try data.write(to: url)
+            return fileName
+        } catch {
+            return nil
+        }
+    }
+}
+
 /// Salva e carica le foto della streak come file .jpg dentro Documents/StreakPhotos.
 /// Tutto locale, niente cloud, niente rete: solo il telefono.
 enum ImageStore {
@@ -34,4 +52,6 @@ enum ImageStore {
         let url = directory.appendingPathComponent(fileName)
         try? FileManager.default.removeItem(at: url)
     }
+    
+    
 }

@@ -78,7 +78,6 @@ struct ConstellationView: View {
                                     .position(x: star.x, y: star.y)
                                     .opacity(appeared ? 1 : 0)
                                     .scaleEffect(appeared ? 1 : 0.3)
-                                    .animation(.spring(response: 0.5, dampingFraction: 0.65).delay(Double(index) * 0.01), value: appeared)
                             }
                         }
                         .frame(width: layout.contentSize.width, height: layout.contentSize.height)

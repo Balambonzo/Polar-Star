@@ -1,3 +1,4 @@
+//OnBoardingView.swift
 import SwiftUI
 import SwiftData
 import PhotosUI
@@ -210,19 +211,51 @@ struct OnboardingView: View {
     }
 
     private var trainingConfig: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             Text("Level")
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.7))
-            Picker("Level", selection: $onboardingTrainingLevel) {
-                ForEach(TrainingLevel.allCases, id: \.self) { level in
-                    Text(level.displayName).tag(level)
-                }
+
+            VStack(spacing: 8) {
+                levelCard(.beginner, caption: "New to training? Start here — the app builds up gradually as you go.")
+                levelCard(.intermediate, caption: "Already train sometimes? Jump ahead to a more demanding baseline.")
+                levelCard(.advanced, caption: "Follow \"Scheda by Elis\", a fixed 5-day program, Monday to Friday.")
             }
-            .pickerStyle(.segmented)
         }
-        .padding(.top, 2)
+        .padding(.top, 4)
         .padding(.bottom, 6)
+    }
+
+    private func levelCard(_ level: TrainingLevel, caption: String) -> some View {
+        let isSelected = onboardingTrainingLevel == level
+        return Button {
+            onboardingTrainingLevel = level
+        } label: {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? .orange : .white.opacity(0.3))
+                    .padding(.top, 2)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(level.displayName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                    Text(caption)
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.6))
+                        .multilineTextAlignment(.leading)
+                }
+
+                Spacer()
+            }
+            .padding(12)
+            .background(isSelected ? Color.orange.opacity(0.18) : Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected ? Color.orange : Color.white.opacity(0.1), lineWidth: isSelected ? 2 : 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private var readingConfig: some View {
@@ -242,7 +275,7 @@ struct OnboardingView: View {
     private var customConfig: some View {
         VStack(spacing: 10) {
             OnboardingField(placeholder: "Jolly activity", text: $customActivityName)
-            Stepper("Minutes per day: \(customActivityMinutes) min", value: $customActivityMinutes, in: 5...120, step: 5)
+            Stepper("Minimum per day: \(customActivityMinutes) min", value: $customActivityMinutes, in: 5...180, step: 5)
                 .foregroundStyle(.white)
         }
         .padding(.top, 4)
@@ -363,12 +396,14 @@ struct OnboardingView: View {
             attempts += 1
         }
 
+        let profileImage = profile.profileImagePath.flatMap { ImageStore.load($0) }   // ← nuovo
         try? await FriendLookupService.publishMyProfile(
             friendCode: profile.friendCode,
             username: profile.username,
             currentStreak: 0,
             bestStreak: 0,
             lastEntryDate: nil,
+            profileImage: profileImage,   // ← nuovo
             latestPhoto: nil
         )
     }

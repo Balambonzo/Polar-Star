@@ -1,10 +1,6 @@
 import Foundation
 import SwiftData
 
-/// Cache locale di un amico. Non è sincronizzata via CloudKit (vive in un
-/// ModelConfiguration separato, locale): è solo lo specchio di ciò che è
-/// stato letto dal suo profilo pubblico, quindi qui @Attribute(.unique)
-/// resta valido — non tocca lo store CloudKit.
 @Model
 final class Friend {
     @Attribute(.unique)
@@ -14,7 +10,8 @@ final class Friend {
     var friendCode: String
 
     var username: String
-    var profileImagePath: String?
+    var profileImagePath: String?      // foto profilo vera
+    var latestPhotoPath: String?       // ← nuovo: ultima foto attività
     var currentStreak: Int
     var bestStreak: Int
     var lastEntryDate: Date?
@@ -25,6 +22,7 @@ final class Friend {
         self.username = username
         self.friendCode = friendCode
         self.profileImagePath = nil
+        self.latestPhotoPath = nil     // ← nuovo
         self.currentStreak = 0
         self.bestStreak = 0
         self.lastEntryDate = nil

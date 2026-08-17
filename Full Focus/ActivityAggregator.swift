@@ -37,11 +37,20 @@ enum ActivityAggregator {
             }
         }
         if selectedActivities.contains(ActivityKey.training.rawValue) {
-            let dates = Set(trainingEntries.map { calendar.startOfDay(for: $0.date) })
+            let completedTrainingEntries = trainingEntries.filter(\.isCompleted)
+
+            let dates = Set(
+                completedTrainingEntries.map {
+                    calendar.startOfDay(for: $0.date)
+                }
+            )
+
             perActivityDates.append(dates)
-            for e in trainingEntries {
-                let d = calendar.startOfDay(for: e.date)
-                minutesByDate[d, default: 0] += e.durationMinutes
+
+            for entry in completedTrainingEntries {
+                let d = calendar.startOfDay(for: entry.date)
+
+                minutesByDate[d, default: 0] += entry.durationMinutes
                 allDates.append(d)
             }
         }

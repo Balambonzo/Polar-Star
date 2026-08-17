@@ -1,3 +1,4 @@
+//TodayView.swift
 import SwiftUI
 import SwiftData
 import UIKit
@@ -20,14 +21,16 @@ struct TodayView: View {
     @State private var celebratingMilestone: (StarType, Int)?
 
     @State private var studyTimer = StudyTimerController(id: "study")
-    @State private var trainingTimer = StudyTimerController(id: "training")
     @State private var readingTimer = StudyTimerController(id: "reading")
     @State private var customTimer = StudyTimerController(id: "custom")
+    
+    @State private var trainingController: TrainingWorkoutController?
+    @State private var activeTrainingEntry: TrainingEntry?
+    @State private var showTrainingWorkout = false
 
     @State private var selectedDurationMinutes = 15
     @State private var pageReachedText = ""
     @State private var selectedBookForSession: Book?
-    @State private var selectedTrainingMuscles: Set<String> = []
 
     @State private var activeFlow: ActiveFlow?
     @Environment(\.scenePhase) private var scenePhase
@@ -47,7 +50,11 @@ struct TodayView: View {
         let today = Calendar.current.startOfDay(for: Date())
         switch key {
         case ActivityKey.study.rawValue: return studyDoneRaw
-        case ActivityKey.training.rawValue: return trainingEntries.contains { Calendar.current.startOfDay(for: $0.date) == today }
+        case ActivityKey.training.rawValue:
+            return trainingEntries.contains {
+                $0.isCompleted &&
+                Calendar.current.startOfDay(for: $0.date) == today
+            }
         case ActivityKey.reading.rawValue: return readingSessions.contains { Calendar.current.startOfDay(for: $0.date) == today }
         case ActivityKey.custom.rawValue: return customEntries.contains { Calendar.current.startOfDay(for: $0.date) == today }
         default: return false
@@ -81,121 +88,143 @@ struct TodayView: View {
     private var currentTrainingLevel: TrainingLevel {
         TrainingLevel(rawValue: profiles.first?.trainingLevel ?? "") ?? .beginner
     }
+    
+    /// Domenica non è prevista dalla scheda advanced: si può solo
+    /// segnare come giorno di riposo, non c'è un allenamento da avviare.
+    private var isRestDay: Bool {
+        currentTrainingLevel == .advanced &&
+        Calendar.current.component(.weekday, from: Date()) == 1   // 1 = domenica
+    }
+    
+    /// Lunedì-Venerdì per gli utenti advanced usano la scheda fissa;
+    /// sabato e domenica restano a scelta libera (vecchio flusso).
+    private var isFixedTrainingDay: Bool {
+        let weekday = Calendar.current.component(.weekday, from: Date())
+        return (2...6).contains(weekday)
+    }
 
     var body: some View {
+        let _ = Self._printChanges()   
         NavigationStack {
             ZStack {
                 StarfieldBackground()
-
-                VStack(spacing: 28) {
-                    Spacer()
-
-                    ZStack {
-                        Circle()
-                            .fill(Theme.accent.opacity(0.08))
-                            .frame(width: 250, height: 250)
-                            .blur(radius: 20)
-
-                        Circle()
-                            .stroke(Theme.cardBorder, lineWidth: 14)
-                            .frame(width: 224, height: 224)
-
-                        Circle()
-                            .trim(from: 0, to: max(todayProgressFraction, 0.001))
-                            .stroke(
-                                AngularGradient(
-                                    colors: todayProgressFraction >= 1
+                ScrollView {
+                    VStack(spacing: 28) {
+                        Spacer(minLength: 20)
+                        
+                        ZStack {
+                            Circle()
+                                .fill(Theme.accent.opacity(0.08))
+                                .frame(width: 250, height: 250)
+                                .blur(radius: 20)
+                            
+                            Circle()
+                                .stroke(Theme.cardBorder, lineWidth: 14)
+                                .frame(width: 224, height: 224)
+                            
+                            Circle()
+                                .trim(from: 0, to: max(todayProgressFraction, 0.001))
+                                .stroke(
+                                    AngularGradient(
+                                        colors: todayProgressFraction >= 1
                                         ? [.green, .mint, .green]
                                         : [.orange, .yellow, .orange],
-                                    center: .center
-                                ),
-                                style: StrokeStyle(lineWidth: 14, lineCap: .round)
-                            )
-                            .frame(width: 224, height: 224)
-                            .rotationEffect(.degrees(-90))
-                            .glow(todayProgressFraction >= 1 ? .green : .orange, radius: 10)
-
-                        VStack(spacing: 4) {
-                            Image(systemName: "flame.fill")
-                                .font(.system(size: 34))
-                                .foregroundStyle(todayProgressFraction >= 1 ? .green : .orange)
-                            Text("\(stats.currentStreak)")
-                                .font(.system(size: 68, weight: .bold, design: .rounded))
+                                        center: .center
+                                    ),
+                                    style: StrokeStyle(lineWidth: 14, lineCap: .round)
+                                )
+                                .frame(width: 224, height: 224)
+                                .rotationEffect(.degrees(-90))
+                                .glow(todayProgressFraction >= 1 ? .green : .orange, radius: 10)
+                            
+                            VStack(spacing: 4) {
+                                Image(systemName: "flame.fill")
+                                    .font(.system(size: 34))
+                                    .foregroundStyle(todayProgressFraction >= 1 ? .green : .orange)
+                                Text("\(stats.currentStreak)")
+                                    .font(.system(size: 68, weight: .bold, design: .rounded))
+                                    .foregroundStyle(Theme.textPrimary)
+                                    .monospacedDigit()
+                                    .contentTransition(.numericText())
+                                Text(stats.currentStreak == 1 ? "day" : "days")
+                                    .font(.subheadline)
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+                        }
+                        .scaleEffect(appeared ? 1 : 0.85)
+                        .opacity(appeared ? 1 : 0)
+                        .overlay {
+                            if let (starType, days) = celebratingMilestone {
+                                MilestoneCelebrationView(starType: starType, streakDays: days)
+                                    .onAppear {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
+                                            withAnimation { celebratingMilestone = nil }
+                                        }
+                                    }
+                                    .transition(.opacity)
+                            }
+                        }
+                        
+                        VStack(spacing: 8) {
+                            Text(stats.todayDone ? "This is the way" : "Not finished yet")
+                                .font(.headline)
                                 .foregroundStyle(Theme.textPrimary)
-                                .monospacedDigit()
-                                .contentTransition(.numericText())
-                            Text(stats.currentStreak == 1 ? "day" : "days")
-                                .font(.subheadline)
+                            Text("Record: \(stats.bestStreak) \(stats.bestStreak == 1 ? "day" : "days")")
+                                .font(.footnote)
                                 .foregroundStyle(Theme.textSecondary)
                         }
-                    }
-                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: stats.currentStreak)
-                    .scaleEffect(appeared ? 1 : 0.85)
-                    .opacity(appeared ? 1 : 0)
-                    .overlay {
-                        if let (starType, days) = celebratingMilestone {
-                            MilestoneCelebrationView(starType: starType, streakDays: days)
-                                .onAppear {
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
-                                        withAnimation { celebratingMilestone = nil }
-                                    }
-                                }
-                                .transition(.opacity)
+                        .opacity(appeared ? 1 : 0)
+                        
+                        Spacer(minLength: 20)
+                        
+                        Group {
+                            if stats.todayDone {
+                                Label("Done for today", systemImage: "checkmark.seal.fill")
+                                    .font(.headline)
+                                    .foregroundStyle(.green)
+                                    .frame(maxWidth: .infinity)
+                                    .glassCard()
+                            } else if activeFlow == .study {
+                                studyFlowCard
+                            } else if activeFlow == .training {
+                                trainingFlowCard
+                            } else if activeFlow == .reading {
+                                readingFlowCard
+                            } else if activeFlow == .custom {
+                                customFlowCard
+                            } else {
+                                activityChoiceGrid
+                            }
                         }
+                        .padding(.horizontal, 24)
+                        
+                        Spacer(minLength: 20)
                     }
-
-                    VStack(spacing: 8) {
-                        Text(stats.todayDone ? "This is the way" : "Not finished yet")
-                            .font(.headline)
-                            .foregroundStyle(Theme.textPrimary)
-                        Text("Record: \(stats.bestStreak) \(stats.bestStreak == 1 ? "day" : "days")")
-                            .font(.footnote)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                    .opacity(appeared ? 1 : 0)
-
-                    Spacer()
-
-                    Group {
-                        if stats.todayDone {
-                            Label("Done for today", systemImage: "checkmark.seal.fill")
-                                .font(.headline)
-                                .foregroundStyle(.green)
-                                .frame(maxWidth: .infinity)
-                                .glassCard()
-                        } else if activeFlow == .study {
-                            studyFlowCard
-                        } else if activeFlow == .training {
-                            trainingFlowCard
-                        } else if activeFlow == .reading {
-                            readingFlowCard
-                        } else if activeFlow == .custom {
-                            customFlowCard
-                        } else {
-                            activityChoiceGrid
-                        }
-                    }
-                    .padding(.horizontal, 24)
-
-                    Spacer(minLength: 20)
+                    .frame(maxWidth: .infinity)
                 }
+                .scrollBounceBehavior(.basedOnSize) // niente rimbalzo se il contenuto entra tutto
             }
             .dismissKeyboardOnTap()
             .navigationTitle("Today")
+            .navigationBarTitleDisplayMode(.inline) // titolo fisso e piccolo, sempre sopra il contenuto
             .fontDesign(.rounded)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.1)) {
                     appeared = true
                 }
+                Task {
+                    await BackupSyncService.restoreStudyEntriesIfNeeded(context: modelContext, currentEntries: entries)
+                    if !entries.isEmpty {
+                        BackupSyncService.backupStudyEntries(entries)
+                    }
+                }
                 studyTimer.handleScenePhase(scenePhase)
-                trainingTimer.handleScenePhase(scenePhase)
                 readingTimer.handleScenePhase(scenePhase)
                 customTimer.handleScenePhase(scenePhase)
             }
             .onChange(of: scenePhase) { _, newPhase in
                 studyTimer.handleScenePhase(newPhase)
-                trainingTimer.handleScenePhase(newPhase)
                 readingTimer.handleScenePhase(newPhase)
                 customTimer.handleScenePhase(newPhase)
             }
@@ -218,22 +247,47 @@ struct TodayView: View {
             .sheet(isPresented: $showReadingSetup) {
                 ReadingSessionSetupView(
                     onStart: { book, minutes in
-                                            selectedBookForSession = book
-                                            readingTimer.start(minutes: minutes)
-                                            showReadingSetup = false
-                                        },
+                        selectedBookForSession = book
+                        readingTimer.start(minutes: minutes)
+                        showReadingSetup = false
+                    },
                     onNewBook: {
                         showReadingSetup = false
                         showISBNScanner = true
                     }
                 )
             }
+            .fullScreenCover(isPresented: $showTrainingWorkout) {
+                if let controller = trainingController,
+                   let entry = activeTrainingEntry {
+                    
+                    TrainingWorkoutView(
+                        controller: controller,
+                        trainingEntry: entry,
+                        onFinish: {
+                            finishTrainingWorkout()
+                        },
+                        onCancel: {
+                            cancelTrainingWorkout()
+                        }
+                    )
+                }
+            }
             .sheet(isPresented: $showTrainingSetup) {
                 if let profile = profiles.first {
-                    TrainingSessionSetupView(profile: profile, level: currentTrainingLevel, minimumMinutes: currentTrainingLevel.minimumSessionMinutes) { muscles, minutes in
-                        selectedTrainingMuscles = muscles
-                        trainingTimer.start(minutes: minutes)
-                        showTrainingSetup = false
+                    if currentTrainingLevel == .advanced && isFixedTrainingDay {
+                        AdvancedWorkoutSummaryView { exercises in
+                            startTraining(exercises: exercises)
+                            showTrainingSetup = false
+                        }
+                    } else {
+                        TrainingSessionSetupView(
+                            profile: profile,
+                            level: currentTrainingLevel
+                        ) { exercises in
+                            startTraining(exercises: exercises)
+                            showTrainingSetup = false
+                        }
                     }
                 }
             }
@@ -244,20 +298,76 @@ struct TodayView: View {
 
     private var activityChoiceGrid: some View {
         VStack(spacing: 12) {
-            ForEach(rowsForChoiceGrid(), id: \.self) { row in
-                HStack(spacing: 12) {
-                    ForEach(row, id: \.self) { key in
-                        Button {
-                            Haptics.selection()
-                            select(key)
-                        } label: {
-                            activityChoiceLabel(icon: icon(for: key), title: title(for: key))
-                        }
-                    }
+            ForEach(Array(pendingActivities.enumerated()), id: \.element) { index, key in
+                Button {
+                    Haptics.selection()
+                    select(key)
+                } label: {
+                    activityChoiceRow(icon: icon(for: key), title: title(for: key), subtitle: subtitle(for: key))
                 }
+                .buttonStyle(PressableButtonStyle())   // <-- prima era .pressable()
+                .opacity(appeared ? 1 : 0)
+                .offset(y: appeared ? 0 : 10)
             }
         }
     }
+
+        private func subtitle(for key: String) -> String {
+            switch key {
+            case ActivityKey.study.rawValue:
+                return "Sessione a tempo, poi una foto"
+            case ActivityKey.training.rawValue:
+                return "Livello \(currentTrainingLevel.displayName)"
+            case ActivityKey.reading.rawValue:
+                return "Continua il tuo libro"
+            default:
+                let minutes = profiles.first?.customActivityDurationMinutes ?? 30
+                return "\(minutes) minuti"
+            }
+        }
+
+        private func activityChoiceRow(icon: String, title: String, subtitle: String) -> some View {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(colors: [.orange, .orange.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                        )
+                        .frame(width: 50, height: 50)
+                        .shadow(color: .orange.opacity(0.4), radius: 10, y: 4)
+                    Image(systemName: icon)
+                        .font(.system(size: 21, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Theme.textTertiary)
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Theme.card)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(
+                        LinearGradient(colors: [Color.orange.opacity(0.25), .clear], startPoint: .topLeading, endPoint: .bottomTrailing),
+                        lineWidth: 1
+                    )
+            )
+        }
 
     private func select(_ key: String) {
         switch key {
@@ -265,7 +375,9 @@ struct TodayView: View {
             activeFlow = .study
         case ActivityKey.training.rawValue:
             activeFlow = .training
-            showTrainingSetup = true
+            if !isRestDay {
+                showTrainingSetup = true
+            }
         case ActivityKey.reading.rawValue:
             activeFlow = .reading
             showReadingSetup = true
@@ -273,23 +385,6 @@ struct TodayView: View {
             activeFlow = .custom
         }
     }
-
-    private func rowsForChoiceGrid() -> [[String]] {
-        let items = pendingActivities
-        guard !items.isEmpty else { return [] }
-        if items.count == 3 {
-            return [[items[0], items[1]], [items[2]]]
-        }
-        var rows: [[String]] = []
-        var i = 0
-        while i < items.count {
-            let end = min(i + 2, items.count)
-            rows.append(Array(items[i..<end]))
-            i = end
-        }
-        return rows
-    }
-
     private func icon(for key: String) -> String {
         switch key {
         case ActivityKey.study.rawValue: return "book.fill"
@@ -306,18 +401,6 @@ struct TodayView: View {
         case ActivityKey.reading.rawValue: return "Reading"
         default: return profiles.first?.customActivityName ?? "Other"
         }
-    }
-
-    private func activityChoiceLabel(icon: String, title: String) -> some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon).font(.title2)
-            Text(title).font(.subheadline.weight(.semibold))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 18)
-        .foregroundStyle(.white)
-        .background(Color.orange, in: RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .orange.opacity(0.3), radius: 10, y: 5)
     }
 
     private var backButton: some View {
@@ -421,10 +504,10 @@ struct TodayView: View {
                         .font(.subheadline)
                         .foregroundStyle(Theme.textSecondary)
                     Picker("Last", selection: $selectedDurationMinutes) {
-                        ForEach(Array(stride(from: 15, through: 180, by: 15)), id: \.self) { minutes in
-                            Text(durationLabel(minutes)).tag(minutes)
-                        }
-                    }
+                                            ForEach(Array(stride(from: 15, through: 180, by: 15)), id: \.self) { minutes in
+                                                Text(durationLabel(minutes)).tag(minutes)
+                                            }
+                                        }
                     .pickerStyle(.wheel)
                     .frame(height: 100)
                     Button {
@@ -451,6 +534,7 @@ struct TodayView: View {
         let entry = StudyEntry(date: Date(), imageFileName: fileName, studyDurationMinutes: durationMinutes)
         modelContext.insert(entry)
         try? modelContext.save()
+        BackupSyncService.backupStudyEntries(entries + [entry], freshEntry: entry, freshImage: image)
 
         Haptics.success()
         refreshExternalState(newStudyEntry: entry, freshPhoto: image)
@@ -462,42 +546,164 @@ struct TodayView: View {
     // MARK: - Allenamento
 
     private var trainingFlowCard: some View {
-        VStack(spacing: 12) {
-            if trainingTimer.isActive && !trainingTimer.isCompleted {
-                VStack(spacing: 12) {
-                    Text(timeLabel(trainingTimer.remainingSeconds))
-                        .font(.system(size: 40, weight: .bold, design: .rounded))
-                        .foregroundStyle(Theme.textPrimary)
-                        .monospacedDigit()
-                    ProgressView(value: trainingTimer.progress).tint(.orange)
-                    Text(selectedTrainingMuscles.sorted().joined(separator: ", "))
-                        .font(.footnote)
-                        .foregroundStyle(Theme.textSecondary)
-                    pauseCancelRow(for: trainingTimer)
-                }
-                .glassCard()
+        Group {
+            if isRestDay {
+                restDayCard
             } else {
                 backButton
             }
         }
-        .onChange(of: trainingTimer.isCompleted) { _, completed in
-            if completed { completeTraining() }
-        }
     }
 
-    private func completeTraining() {
-        let minutes = Int(trainingTimer.totalDuration / 60)
-        let entry = TrainingEntry(date: Date(), muscleGroups: Array(selectedTrainingMuscles), level: currentTrainingLevel, durationMinutes: minutes)
+    private var restDayCard: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "moon.zzz.fill")
+                .font(.system(size: 40))
+                .foregroundStyle(.orange)
+
+            Text("Enjoy the rest")
+                .font(.title3.bold())
+                .foregroundStyle(Theme.textPrimary)
+
+            Text("Sunday is a rest day on your program. Recovery counts too.")
+                .font(.footnote)
+                .foregroundStyle(Theme.textSecondary)
+                .multilineTextAlignment(.center)
+
+            Button {
+                Haptics.success()
+                completeRestDay()
+            } label: {
+                Text("Mark as done")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .foregroundStyle(.white)
+                    .background(Color.orange, in: RoundedRectangle(cornerRadius: 16))
+            }
+
+            backButton
+        }
+        .glassCard()
+    }
+
+    private func startTraining(exercises: [ExerciseDefinition]) {
+        guard !exercises.isEmpty else {
+            return
+        }
+
+        let startedAt = Date()
+
+        let muscleGroups = Array(
+            Set(exercises.map(\.muscleGroup))
+        )
+        .sorted()
+
+        let entry = TrainingEntry(
+            date: startedAt,
+            muscleGroups: muscleGroups,
+            level: currentTrainingLevel,
+            startedAt: startedAt
+        )
+
+        for (index, definition) in exercises.enumerated() {
+            let exercise = TrainingExercise(
+                name: definition.name,
+                muscleGroup: definition.muscleGroup,
+                cue: definition.cue,
+                mode: definition.mode,
+                targetSets: definition.targetSets,
+                targetReps: definition.targetReps,
+                targetHoldSeconds: definition.targetHoldSeconds,
+                restSeconds: definition.restSeconds,
+                order: index
+            )
+
+            entry.exercises.append(exercise)
+            modelContext.insert(exercise)
+        }
+
         modelContext.insert(entry)
-        advanceTrainingProgress(for: Array(selectedTrainingMuscles))
+
         try? modelContext.save()
+
+        activeTrainingEntry = entry
+
+        let controller = TrainingWorkoutController(
+            exercises: exercises
+        )
+
+        trainingController = controller
+        controller.start()
+
+        showTrainingWorkout = true
+    }
+    
+    private func completeRestDay() {
+        let now = Date()
+        let entry = TrainingEntry(
+            date: now,
+            muscleGroups: [],
+            level: currentTrainingLevel,
+            startedAt: now
+        )
+        entry.isCompleted = true
+        entry.completedAt = now
+        entry.durationMinutes = 0
+
+        modelContext.insert(entry)
+        try? modelContext.save()
+
+        refreshExternalState()
+        activeFlow = nil
+    }
+    
+    private func finishTrainingWorkout() {
+        guard let entry = activeTrainingEntry else {
+            return
+        }
+
+        let elapsed = Date().timeIntervalSince(entry.startedAt)
+
+        entry.durationMinutes = max(
+            1,
+            Int(round(elapsed / 60.0))
+        )
+
+        entry.isCompleted = true
+        entry.completedAt = Date()
+
+        advanceTrainingProgress(
+            for: entry.muscleGroups
+        )
+
+        try? modelContext.save()
+
         Haptics.success()
         refreshExternalState()
-        trainingTimer.markConsumed()
+
+        trainingController = nil
+        activeTrainingEntry = nil
+        showTrainingWorkout = false
         activeFlow = nil
     }
 
+    private func cancelTrainingWorkout() {
+        if let entry = activeTrainingEntry {
+            modelContext.delete(entry)
+            try? modelContext.save()
+        }
+
+        trainingController?.cancel()
+
+        trainingController = nil
+        activeTrainingEntry = nil
+        showTrainingWorkout = false
+        activeFlow = nil
+    }
+    
     private func advanceTrainingProgress(for muscles: [String]) {
+        guard currentTrainingLevel != .advanced else { return }   // ← nuovo
         guard let profile = profiles.first else { return }
         var progress = profile.trainingProgress
         for muscle in muscles {
@@ -684,6 +890,7 @@ struct TodayView: View {
         WidgetCenter.shared.reloadAllTimelines()
 
         guard let profile = profiles.first else { return }
+        let profileImage = profile.profileImagePath.flatMap { ImageStore.load($0) }   // ← nuovo
         Task {
             try? await FriendLookupService.publishMyProfile(
                 friendCode: profile.friendCode,
@@ -691,6 +898,7 @@ struct TodayView: View {
                 currentStreak: updatedStats.currentStreak,
                 bestStreak: updatedStats.bestStreak,
                 lastEntryDate: Date(),
+                profileImage: profileImage,   // ← nuovo
                 latestPhoto: freshPhoto
             )
         }

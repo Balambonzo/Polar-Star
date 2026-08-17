@@ -1,3 +1,4 @@
+//ProfileView.swift
 import SwiftUI
 import SwiftData
 import PhotosUI
@@ -11,6 +12,7 @@ struct ProfileView: View {
     @Query private var readingSessions: [ReadingSession]
     
     @State private var profile: UserProfile?
+    @State private var showWeeklyReview = false
     @State private var appeared = false
     @State private var copiedFeedback = false
     @State private var photoScale: CGFloat = 1
@@ -103,12 +105,14 @@ struct ProfileView: View {
     /// fare nulla.
     private func republishMyProfileIfNeeded() async {
         guard let profile else { return }
+        let profileImage = profile.profileImagePath.flatMap { ImageStore.load($0) }   // ← nuovo
         try? await FriendLookupService.publishMyProfile(
             friendCode: profile.friendCode,
             username: profile.username,
             currentStreak: stats.currentStreak,
             bestStreak: stats.bestStreak,
             lastEntryDate: entries.last?.date,
+            profileImage: profileImage,   // ← nuovo
             latestPhoto: nil
         )
     }
@@ -131,13 +135,16 @@ struct ProfileView: View {
         for request in accepted {
             guard !friends.contains(where: { $0.friendCode == request.to }) else { continue }
             guard let found = try? await FriendLookupService.lookupFriend(byCode: request.to) else { continue }
-            
+
             let friend = Friend(username: found.username, friendCode: found.friendCode)
             friend.currentStreak = found.currentStreak
             friend.bestStreak = found.bestStreak
             friend.lastEntryDate = found.lastEntryDate
-            if let photo = found.latestPhoto, let fileName = ImageStore.save(photo) {
+            if let profileImage = found.profileImage, let fileName = ImageStore.save(profileImage) {   // ← corretto
                 friend.profileImagePath = fileName
+            }
+            if let latestPhoto = found.latestPhoto, let fileName = ImageStore.save(latestPhoto) {   // ← nuovo
+                friend.latestPhotoPath = fileName
             }
             modelContext.insert(friend)
         }
@@ -155,8 +162,11 @@ struct ProfileView: View {
                     friend.currentStreak = found.currentStreak
                     friend.bestStreak = found.bestStreak
                     friend.lastEntryDate = found.lastEntryDate
-                    if let photo = found.latestPhoto, let fileName = ImageStore.save(photo) {
+                    if let profileImage = found.profileImage, let fileName = ImageStore.save(profileImage) {   // ← corretto
                         friend.profileImagePath = fileName
+                    }
+                    if let latestPhoto = found.latestPhoto, let fileName = ImageStore.save(latestPhoto) {   // ← nuovo
+                        friend.latestPhotoPath = fileName
                     }
                     modelContext.insert(friend)
                     try? modelContext.save()
@@ -221,6 +231,9 @@ struct ProfileView: View {
                     AddFriendView(myProfile: profile)
                 }
             }
+            .sheet(isPresented: $showWeeklyReview) {
+                            WeeklyReviewView()
+                        }
             .sheet(item: $selectedFriend) { friend in
                 FriendDetailView(friend: friend)
             }
@@ -354,14 +367,29 @@ struct ProfileView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .padding(.top, 4)
+            
+            Button {
+                Haptics.tap()
+                showWeeklyReview = true
+            } label: {
+                Label("Your week", systemImage: "calendar")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.orange)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .glassCard(padding: 0)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 24)
         .glassCard(padding: 0)
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 16)
-        .animation(.easeOut(duration: 0.5).delay(0.05), value: appeared)
+        
+        
     }
+    
+    
     
     // MARK: - Stats grid 2x2
 
@@ -379,7 +407,6 @@ struct ProfileView: View {
             }
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 16)
-            .animation(.easeOut(duration: 0.5).delay(0.1), value: appeared)
         }
     
 
@@ -417,7 +444,6 @@ struct ProfileView: View {
             }
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 16)
-            .animation(.easeOut(duration: 0.5).delay(0.15), value: appeared)
         }
     
     // MARK: - Friends
@@ -444,7 +470,6 @@ struct ProfileView: View {
         }
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 16)
-        .animation(.easeOut(duration: 0.5).delay(0.18), value: appeared)
     }
     
     private func friendsSection(_ profile: UserProfile) -> some View {
@@ -508,7 +533,6 @@ struct ProfileView: View {
         }
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 16)
-        .animation(.easeOut(duration: 0.5).delay(0.2), value: appeared)
     }
     
     // MARK: - Componenti riusabili

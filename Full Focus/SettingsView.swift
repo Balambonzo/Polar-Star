@@ -27,6 +27,8 @@ struct SettingsView: View {
     @State private var showResetOnboardingConfirm = false
     @State private var showDeleteAccountConfirm = false
     @State private var isDeletingAccount = false
+    @State private var showBackupLogin = false
+    @State private var isBackupConnected = false
 
     private var selectedActivities: [String] {
             profiles.first?.selectedActivities ?? []
@@ -106,6 +108,24 @@ struct SettingsView: View {
                                                 .disabled(isDeletingAccount)
                     }
                     .listRowBackground(Theme.card)
+                    
+                    Section("Backup") {
+                                            Button {
+                                                showBackupLogin = true
+                                            } label: {
+                                                Label(isBackupConnected ? "Modifica backup" : "Collega backup", systemImage: "externaldrive.badge.icloud")
+                                            }
+                                            .foregroundStyle(Theme.textPrimary)
+
+                                            HStack(spacing: 6) {
+                                                Image(systemName: isBackupConnected ? "checkmark.circle.fill" : "xmark.circle")
+                                                    .foregroundStyle(isBackupConnected ? .green : Theme.textTertiary)
+                                                Text(isBackupConnected ? "Backup collegato" : "Backup non collegato")
+                                                    .font(.footnote)
+                                                    .foregroundStyle(Theme.textSecondary)
+                                            }
+                                        }
+                                        .listRowBackground(Theme.card)
 
                     Section {
                                             NavigationLink {
@@ -157,10 +177,11 @@ struct SettingsView: View {
                 }
             }
             .onAppear {
-                let hour = UserDefaults.standard.object(forKey: NotificationScheduler.mainReminderHourKey) as? Int ?? 19
-                let minute = UserDefaults.standard.object(forKey: NotificationScheduler.mainReminderMinuteKey) as? Int ?? 0
-                reminderTime = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: Date()) ?? Date()
-            }
+                            let hour = UserDefaults.standard.object(forKey: NotificationScheduler.mainReminderHourKey) as? Int ?? 19
+                            let minute = UserDefaults.standard.object(forKey: NotificationScheduler.mainReminderMinuteKey) as? Int ?? 0
+                            reminderTime = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: Date()) ?? Date()
+                            Task { isBackupConnected = await PocketBaseClient.shared.isAuthenticated }
+                        }
             .alert("Want to go back to the intro?", isPresented: $showResetOnboardingConfirm) {
                 Button("Exit", role: .cancel) {}
                 Button("Go") {
@@ -178,12 +199,17 @@ struct SettingsView: View {
                             Button("Delete", role: .destructive) {
                                 deleteAccount()
                             }
-                        } message: {
-                            Text("Tutti i tuoi dati — foto, streak, libri, amici, profilo pubblico — verranno cancellati per sempre. Questa azione non si può annullare.")
-                            Text("All your datas (photos, streak, books, friends, public profile) which will be lost forever. There is no going back.")
-                        }
-        }
-    }
+            } message: {
+                                        Text("Tutti i tuoi dati — foto, streak, libri, amici, profilo pubblico — verranno cancellati per sempre. Questa azione non si può annullare.")
+                                        Text("All your datas (photos, streak, books, friends, public profile) which will be lost forever. There is no going back.")
+                                    }
+            .sheet(isPresented: $showBackupLogin, onDismiss: {
+                                Task { isBackupConnected = await PocketBaseClient.shared.isAuthenticated }
+                            }) {
+                                BackupLoginView()
+                            }
+                    }
+                }
 
     // MARK: - Esportazione
 
@@ -223,34 +249,41 @@ struct SettingsView: View {
     }
     
     private func deleteAccount() {
-            isDeletingAccount = true
-            let codeToDelete = profiles.first?.friendCode
+                isDeletingAccount = true
+                let codeToDelete = profiles.first?.friendCode
 
-            Task {
-                if let code = codeToDelete {
-                    try? await FriendLookupService.deleteProfile(friendCode: code)
-                }
+                // 1. Cancella subito tutto in locale — l'utente non deve mai
+                // restare bloccato ad aspettare la rete per questa parte.
+                for entry in entries { modelContext.delete(entry) }
+                for entry in trainingEntries { modelContext.delete(entry) }
+                for entry in readingSessions { modelContext.delete(entry) }
+                for entry in customEntries { modelContext.delete(entry) }
+                for book in books { modelContext.delete(book) }
+                for friend in friends { modelContext.delete(friend) }
+                if let profile = profiles.first { modelContext.delete(profile) }
+                try? modelContext.save()
 
-                await MainActor.run {
-                    for entry in entries { modelContext.delete(entry) }
-                    for entry in trainingEntries { modelContext.delete(entry) }
-                    for entry in readingSessions { modelContext.delete(entry) }
-                    for entry in customEntries { modelContext.delete(entry) }
-                    for book in books { modelContext.delete(book) }
-                    for friend in friends { modelContext.delete(friend) }
-                    if let profile = profiles.first { modelContext.delete(profile) }
-                    try? modelContext.save()
+                UserDefaults.standard.removeObject(forKey: "studyTimerState_v2_study")
+                UserDefaults.standard.removeObject(forKey: "studyTimerState_v2_training")
+                UserDefaults.standard.removeObject(forKey: "studyTimerState_v2_reading")
+                UserDefaults.standard.removeObject(forKey: "studyTimerState_v2_custom")
 
-                    UserDefaults.standard.removeObject(forKey: "studyTimerState_v2_study")
-                    UserDefaults.standard.removeObject(forKey: "studyTimerState_v2_training")
-                    UserDefaults.standard.removeObject(forKey: "studyTimerState_v2_reading")
-                    UserDefaults.standard.removeObject(forKey: "studyTimerState_v2_custom")
+                isDeletingAccount = false
+                dismiss()
 
-                    isDeletingAccount = false
-                    dismiss()
+                // 2. Pulizia remota "best effort", in background: se Firebase o
+                // il Mac non sono raggiungibili, fallisce in silenzio — l'utente
+                // ha già chiuso la schermata a questo punto, quindi non blocca.
+                Task {
+                    if let code = codeToDelete {
+                        try? await FriendLookupService.deleteProfile(friendCode: code)
+                    }
+                    if await PocketBaseClient.shared.isAuthenticated {
+                        await PocketBaseClient.shared.eraseAllBackupData()
+                        await PocketBaseClient.shared.logout()
+                    }
                 }
             }
-        }
 }
 
 

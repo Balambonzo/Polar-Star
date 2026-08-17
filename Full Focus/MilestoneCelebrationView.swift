@@ -31,7 +31,6 @@ struct MilestoneCelebrationView: View {
                             y: appeared ? sin(particle.angle) * particle.distance : 0
                         )
                         .opacity(appeared ? 0 : 1)
-                        .animation(.easeOut(duration: 0.9).delay(particle.delay), value: appeared)
                 }
 
                 VStack(spacing: 14) {

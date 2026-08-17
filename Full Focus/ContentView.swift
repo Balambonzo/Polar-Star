@@ -4,14 +4,6 @@ import SwiftData
 struct ContentView: View {
     @Query private var profiles: [UserProfile]
 
-    init() {
-        let appearance = UITabBarAppearance()
-        appearance.configureWithTransparentBackground()
-        appearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
-    }
-
     private var selectedActivities: [String] {
         profiles.first?.selectedActivities ?? []
     }
@@ -21,7 +13,7 @@ struct ContentView: View {
             TodayView()
                 .tabItem { Label("Today", systemImage: "flame.fill") }
             ConstellationView()
-                            .tabItem { Label("Costellazione", systemImage: "sparkles") }
+                .tabItem { Label("Constellation", systemImage: "square.grid.3x3.fill") }
             if selectedActivities.contains("training") {
                 TrainingView()
                     .tabItem { Label("Training", systemImage: "figure.strengthtraining.traditional") }
@@ -34,5 +26,17 @@ struct ContentView: View {
                 .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
         }
         .tint(.orange)
+        .persistentSystemOverlays(.visible) 
+        .onAppear { Self.configureTabBarAppearanceOnce }
     }
+
+    /// Eseguito una sola volta per l'intera vita del processo, non ad
+    /// ogni ricreazione di ContentView.
+    private static let configureTabBarAppearanceOnce: Void = {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }()
 }
