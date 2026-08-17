@@ -74,6 +74,9 @@ struct AdvancedTrainingDayView: View {
                         Spacer(minLength: 30)
                     }
                 }
+                .transaction {
+                    $0.scrollContentOffsetAdjustmentBehavior = .disabled
+                }
             }
             .navigationTitle("Training")
             .navigationBarTitleDisplayMode(.inline)

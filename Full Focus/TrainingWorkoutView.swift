@@ -55,6 +55,14 @@ struct TrainingWorkoutView: View {
             }
         }
         .contentShape(Rectangle())
+        .background {
+            // Copre anche la fase di recupero, che non usa una ScrollView.
+            // È solo diagnostica: verrà rimossa insieme alla sonda quando
+            // avremo il tracciato dal dispositivo.
+//            RenderMotionProbe(name: "Training workout root")
+//                .frame(width: 1, height: 1)
+//                .allowsHitTesting(false)
+       }
         .onTapGesture {
             focusedField = nil
             hideKeyboard()
@@ -209,6 +217,9 @@ struct TrainingWorkoutView: View {
             .frame(maxWidth: .infinity)
         }
         .scrollIndicators(.hidden)
+        .transaction {
+            $0.scrollContentOffsetAdjustmentBehavior = .disabled
+        }
     }
 
     // MARK: - Rest

@@ -274,13 +274,13 @@ private struct ConstellationStar: View {
             }
         }
         .shadow(color: starType.glowColor.opacity(0.5), radius: isLatest ? 10 : 5)
+        .animation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true), value: glow)
         .onAppear {
-            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
-                glow = true
-            }
+            glow = true
         }
     }
 }
+
 
 private struct PendingConstellationStar: View {
     @State private var pulse = false
@@ -292,10 +292,10 @@ private struct PendingConstellationStar: View {
             .scaleEffect(pulse ? 1.25 : 1.0)
             .opacity(pulse ? 0 : 1)
             .overlay(Circle().fill(Color.orange.opacity(0.15)).frame(width: 30, height: 30))
+            .animation(.easeOut(duration: 1.4).repeatForever(autoreverses: false), value: pulse)
             .onAppear {
-                withAnimation(.easeOut(duration: 1.4).repeatForever(autoreverses: false)) {
-                    pulse = true
-                }
+                pulse = true
             }
     }
 }
+

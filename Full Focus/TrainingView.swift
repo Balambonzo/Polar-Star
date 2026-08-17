@@ -186,6 +186,14 @@ struct TrainingView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 40)
+                    .background {
+//                        RenderMotionProbe(name: "Training tab scroll content")
+//                            .frame(width: 1, height: 1)
+//                            .allowsHitTesting(false)
+                   }
+                }
+                .transaction {
+                    $0.scrollContentOffsetAdjustmentBehavior = .disabled
                 }
             }
             .navigationTitle("Training")

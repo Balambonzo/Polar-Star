@@ -104,7 +104,7 @@ struct TodayView: View {
     }
 
     var body: some View {
-        let _ = Self._printChanges()   
+ //       let _ = Self._printChanges()   
         NavigationStack {
             ZStack {
                 StarfieldBackground()
@@ -201,8 +201,16 @@ struct TodayView: View {
                         Spacer(minLength: 20)
                     }
                     .frame(maxWidth: .infinity)
+                    .background {
+//                        RenderMotionProbe(name: "Today scroll content")
+//                            .frame(width: 1, height: 1)
+//                            .allowsHitTesting(false)
+                    }
                 }
                 .scrollBounceBehavior(.basedOnSize) // niente rimbalzo se il contenuto entra tutto
+                .transaction {
+                    $0.scrollContentOffsetAdjustmentBehavior = .disabled
+                }
             }
             .dismissKeyboardOnTap()
             .navigationTitle("Today")

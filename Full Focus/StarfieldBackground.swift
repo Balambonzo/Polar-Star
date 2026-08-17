@@ -24,7 +24,7 @@ struct StarfieldBackground: View {
 
                             if starfieldEnabled {
                                 ForEach(stars) { star in
-                                    TwinklingStar(baseOpacity: star.baseOpacity)
+                                    StaticStar(baseOpacity: star.baseOpacity)
                                         .frame(width: star.size, height: star.size)
                                         .position(x: star.x * geo.size.width, y: star.y * geo.size.height)
                                 }
@@ -37,7 +37,7 @@ struct StarfieldBackground: View {
                             x: .random(in: 0...1),
                             y: .random(in: 0...1),
                             size: .random(in: 1...2.6),
-                            baseOpacity: .random(in: 0.25...0.85)
+                            baseOpacity: .random(in: 0.5...1.0)
                         )
                     }
                 }
@@ -47,22 +47,15 @@ struct StarfieldBackground: View {
     }
 }
 
-private struct TwinklingStar: View {
+/// Le stelle sono volutamente statiche. Animare molte subview in un
+/// GeometryReader a schermo intero ha causato instabilità di composizione
+/// su alcune gerarchie SwiftUI/iOS 26.
+private struct StaticStar: View {
     let baseOpacity: Double
-    @State private var dim = false
 
     var body: some View {
         Circle()
             .fill(Color.white)
-            .opacity(dim ? baseOpacity * 0.4 : baseOpacity)
-            .onAppear {
-                withAnimation(
-                    .easeInOut(duration: .random(in: 1.8...3.6))
-                        .repeatForever(autoreverses: true)
-                        .delay(.random(in: 0...2))
-                ) {
-                    dim = true
-                }
-            }
+            .opacity(baseOpacity)
     }
 }

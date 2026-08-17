@@ -63,6 +63,9 @@ struct AdvancedWorkoutSummaryView: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 30)
                 }
+                .transaction {
+                    $0.scrollContentOffsetAdjustmentBehavior = .disabled
+                }
             }
             .navigationTitle("Scheda by Elis")
             .navigationBarTitleDisplayMode(.inline)
@@ -144,4 +147,3 @@ struct AdvancedWorkoutSummaryView: View {
             .background(Theme.cardBorder.opacity(0.35), in: Capsule())
     }
 }
-

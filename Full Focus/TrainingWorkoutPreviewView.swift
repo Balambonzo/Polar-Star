@@ -47,6 +47,9 @@ struct TrainingWorkoutPreviewView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 30)
             }
+            .transaction {
+                $0.scrollContentOffsetAdjustmentBehavior = .disabled
+            }
         }
         .navigationTitle("Your workout")
         .navigationBarTitleDisplayMode(.inline)

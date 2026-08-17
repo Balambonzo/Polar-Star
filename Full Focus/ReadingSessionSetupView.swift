@@ -85,6 +85,9 @@ struct ReadingSessionSetupView: View {
                         Spacer(minLength: 30)
                     }
                 }
+                .transaction {
+                    $0.scrollContentOffsetAdjustmentBehavior = .disabled
+                }
             }
             .navigationTitle("Reading")
             .navigationBarTitleDisplayMode(.inline)

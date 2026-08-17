@@ -92,6 +92,14 @@ struct TrainingSessionSetupView: View {
 
                         Spacer(minLength: 30)
                     }
+                    .background {
+//                        RenderMotionProbe(name: "Training setup scroll content")
+//                            .frame(width: 1, height: 1)
+//                            .allowsHitTesting(false)
+                    }
+                }
+                .transaction {
+                    $0.scrollContentOffsetAdjustmentBehavior = .disabled
                 }
             }
             .navigationTitle("Training")
