@@ -17,6 +17,7 @@ enum StarType: Equatable {
     case magnetar
     case quasar
     case blackHole
+    case whiteHole
 
     var displayName: String {
         switch self {
@@ -31,6 +32,7 @@ enum StarType: Equatable {
         case .magnetar: return "Magnetar"
         case .quasar: return "Quasar"
         case .blackHole: return "Buco Nero"
+        case .whiteHole: return "Buco Bianco"
         }
     }
 
@@ -47,6 +49,7 @@ enum StarType: Equatable {
         case .magnetar: return 42
         case .quasar: return 48
         case .blackHole: return 56
+        case .whiteHole: return 62
         }
     }
 
@@ -63,6 +66,7 @@ enum StarType: Equatable {
         case .magnetar: return .purple
         case .quasar: return Color(red: 0.6, green: 0.4, blue: 1.0)
         case .blackHole: return .black
+        case .whiteHole: return .white
         }
     }
 
@@ -70,8 +74,21 @@ enum StarType: Equatable {
         starType_glowOverride ?? coreColor
     }
 
+    /// Le stelle di traguardo hanno un disegno dedicato (vedi
+    /// SpecialStarShapeView) invece del semplice cerchio colorato.
+    var isSpecial: Bool {
+        switch self {
+        case .supernova, .pulsar, .magnetar, .quasar, .blackHole, .whiteHole: return true
+        default: return false
+        }
+    }
+
     private var starType_glowOverride: Color? {
-        self == .blackHole ? .purple : nil
+        switch self {
+        case .blackHole: return .purple
+        case .whiteHole: return .yellow
+        default: return nil
+        }
     }
 
     /// Stella ordinaria, in base a quanti minuti hai studiato quel giorno.
@@ -89,8 +106,14 @@ enum StarType: Equatable {
     /// Stella speciale se quel giorno è un traguardo della striscia
     /// consecutiva, altrimenti nil (si usa quella ordinaria).
     static func milestone(forStreakPosition position: Int) -> StarType? {
-        if position >= 100 && position % 100 == 0 { return .blackHole }
-        switch position {
+        guard position > 0 else { return nil }
+
+        if position % 365 == 0 { return .whiteHole }
+
+        let withinCycle = position % 365
+        if withinCycle > 0 && withinCycle % 100 == 0 { return .blackHole }
+
+        switch withinCycle {
         case 10: return .supernova
         case 30: return .pulsar
         case 50: return .magnetar

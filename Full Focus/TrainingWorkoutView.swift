@@ -24,6 +24,7 @@ struct TrainingWorkoutView: View {
     @State private var secondsText = ""
     @State private var weightText = ""
     @State private var rpe: Double = 8
+    @State private var showExitConfirmation = false
     
 
     private var currentExerciseEntity: TrainingExercise? {
@@ -80,6 +81,23 @@ struct TrainingWorkoutView: View {
                         controller.pauseTickingForBackground()
                     }
                 }
+        .onChange(of: controller.isHoldTimerActive) { _, isActive in
+            if !isActive, secondsText.isEmpty, let target = currentExercise?.targetHoldSeconds {
+                secondsText = "\(target)"
+            }
+        }
+        .confirmationDialog(
+            "Exit this workout?",
+            isPresented: $showExitConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Exit workout", role: .destructive) {
+                onCancel()
+            }
+            Button("Keep training", role: .cancel) {}
+        } message: {
+            Text("Your progress on this session will be lost.")
+        }
     }
 
     // MARK: - Exercise
@@ -140,13 +158,29 @@ struct TrainingWorkoutView: View {
                         "Target: \(exercise.targetHoldSeconds ?? 0) seconds"
                     )
 
+                    // Countdown automatico — vibra da solo a fine hold
+                    VStack(spacing: 4) {
+                        Text(controller.holdTimeLabel)
+                            .font(.system(size: 44, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(
+                                controller.isHoldTimerActive ? Theme.textPrimary : Theme.success
+                            )
+
+                        if !controller.isHoldTimerActive {
+                            Text("Time's up — adjust below if needed")
+                                .font(.caption2)
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                    .glassCard()
+
                     inputField(
                         title: "Seconds",
                         text: $secondsText,
                         keyboard: .numberPad
                     )
                 }
-
                 // Weight
                 inputField(
                     title: "Weight (kg, optional)",
@@ -203,7 +237,7 @@ struct TrainingWorkoutView: View {
                 // Exit
                 Button {
                     Haptics.tap()
-                    onCancel()
+                    showExitConfirmation = true   // ← era: onCancel()
                 } label: {
                     Text("Exit workout")
                         .font(.subheadline.weight(.semibold))

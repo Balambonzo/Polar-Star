@@ -1,3 +1,4 @@
+//ActivityAggregator
 import Foundation
 //test
 
@@ -18,7 +19,7 @@ enum ActivityAggregator {
         trainingEntries: [TrainingEntry],
         readingSessions: [ReadingSession],
         customEntries: [CustomActivityEntry]
-    ) -> Result {
+    ) -> Result {   
         let calendar = Calendar.current
 
         var perActivityDates: [Set<Date>] = []

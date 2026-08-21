@@ -7,6 +7,10 @@ struct ISBNScannerFlow: View {
     @State private var manualISBN = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var pendingInfo: ISBNLookupService.BookInfo?
+    @State private var pendingISBN = ""
+    @State private var isAlreadyStarted = false
+    @State private var startPageText = ""
     @Environment(\.dismiss) private var dismiss
 
     private var scannerSupported: Bool {
@@ -28,7 +32,9 @@ struct ISBNScannerFlow: View {
                 VStack {
                     Spacer()
                     VStack(spacing: 12) {
-                        if isLoading {
+                        if let pendingInfo {
+                            confirmPanel(pendingInfo)
+                        } else if isLoading {
                             ProgressView().tint(.white)
                         } else {
                             if let errorMessage {
@@ -57,16 +63,52 @@ struct ISBNScannerFlow: View {
                     .background(.black.opacity(0.6))
                 }
             }
-                    .dismissKeyboardOnTap()
-                    .navigationTitle("Scan ISBN")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbarColorScheme(.dark, for: .navigationBar)
-                    .toolbar {
+            .dismissKeyboardOnTap()
+            .navigationTitle("Scan ISBN")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Close") { dismiss() }
                         .tint(.orange)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func confirmPanel(_ info: ISBNLookupService.BookInfo) -> some View {
+        VStack(spacing: 12) {
+            Text(info.title)
+                .font(.headline)
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+
+            Picker("", selection: $isAlreadyStarted) {
+                Text("New book").tag(false)
+                Text("Already started").tag(true)
+            }
+            .pickerStyle(.segmented)
+
+            if isAlreadyStarted {
+                TextField("Page you're at", text: $startPageText)
+                    .keyboardType(.numberPad)
+                    .padding()
+                    .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+                    .foregroundStyle(.white)
+            }
+
+            Button {
+                confirmBook(info)
+            } label: {
+                Text("Confirm")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .foregroundStyle(.white)
+                    .background(Color.orange, in: RoundedRectangle(cornerRadius: 12))
+            }
+            .disabled(isAlreadyStarted && Int(startPageText) == nil)
         }
     }
 
@@ -82,14 +124,26 @@ struct ISBNScannerFlow: View {
             return
         }
 
+        isLoading = false
+        pendingISBN = cleaned
+        isAlreadyStarted = false
+        startPageText = ""
+        pendingInfo = info
+    }
+
+    private func confirmBook(_ info: ISBNLookupService.BookInfo) {
         let book = Book(
-            isbn: cleaned,
+            isbn: pendingISBN,
             title: info.title,
             author: info.author,
             coverURL: info.coverURL,
             totalPages: info.totalPages > 0 ? info.totalPages : 200
         )
-        isLoading = false
+
+        if isAlreadyStarted, let page = Int(startPageText) {
+            book.currentPage = book.totalPages > 0 ? min(page, book.totalPages) : page
+        }
+
         onBookCreated(book)
         Haptics.success()
     }

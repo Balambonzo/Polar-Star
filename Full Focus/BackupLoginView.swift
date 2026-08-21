@@ -1,14 +1,21 @@
 import SwiftUI
+import SwiftData
 
 /// Schermata da mostrare una tantum per collegare l'app al backup di casa.
 /// Le credenziali, una volta inserite, restano salvate nel Keychain e
 /// l'app farà login da sola alle volte successive (anche dopo reinstallazione).
 struct BackupLoginView: View {
+    
     @Environment(\.dismiss) private var dismiss
     @State private var email = ""
     @State private var password = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
+    
+    @Query private var studyEntries: [StudyEntry]
+    @Query private var trainingEntries: [TrainingEntry]
+    @Query private var readingSessions: [ReadingSession]
+    @Query private var customEntries: [CustomActivityEntry]
 
     var body: some View {
         NavigationStack {
@@ -70,6 +77,12 @@ struct BackupLoginView: View {
         Task {
             do {
                 try await PocketBaseClient.shared.login(email: email, password: password)
+                BackupSyncService.backupEverythingNow(
+                    studyEntries: studyEntries,
+                    trainingEntries: trainingEntries,
+                    readingSessions: readingSessions,
+                    customEntries: customEntries
+                )
                 await MainActor.run { dismiss() }
             } catch {
                 await MainActor.run {

@@ -6,6 +6,7 @@ import WidgetKit
 
 struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
+    
     @Query(sort: \StudyEntry.date) private var entries: [StudyEntry]
     @Query private var profiles: [UserProfile]
     @Query private var trainingEntries: [TrainingEntry]
@@ -19,8 +20,13 @@ struct TodayView: View {
     @State private var showTrainingSetup = false
     @State private var appeared = false
     @State private var celebratingMilestone: (StarType, Int)?
+    @State private var showProfile = false
+    @State private var showWeeklyReview = false
 
-    @State private var studyTimer = StudyTimerController(id: "study")
+    @State private var studyTheoryTimer = StudyTimerController(id: "studyTheory")
+    @State private var studyExerciseTimer = StudyTimerController(id: "studyExercise")
+    @State private var studyTheoryPercent: Double = 50
+    
     @State private var readingTimer = StudyTimerController(id: "reading")
     @State private var customTimer = StudyTimerController(id: "custom")
     
@@ -103,8 +109,41 @@ struct TodayView: View {
         return (2...6).contains(weekday)
     }
 
+    /// La Weekly Review compare in alto a sinistra solo la domenica.
+    private var isSunday: Bool {
+        Calendar.current.component(.weekday, from: Date()) == 1   // 1 = domenica
+    }
+
+    /// Fuori dalla toolbar, così può essere grande quanto vogliamo e resta
+    /// un cerchio vero (nella toolbar veniva schiacciato/ovalizzato).
+    private var profileBubble: some View {
+        Button {
+            Haptics.tap()
+            showProfile = true
+        } label: {
+            ZStack {
+                Circle().fill(Color.white.opacity(0.06))
+                if let path = profiles.first?.profileImagePath, let uiImage = ImageStore.load(path) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 48, height: 48)
+                        .clipShape(Circle())
+                } else {
+                    Image(systemName: "person.fill")
+                        .font(.title3)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+            }
+            .frame(width: 48, height: 48)
+            .overlay(Circle().stroke(Theme.cardBorder, lineWidth: 1))
+            .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
+        }
+        .buttonStyle(.plain)
+    }
+
     var body: some View {
- //       let _ = Self._printChanges()   
+ //       let _ = Self._printChanges()
         NavigationStack {
             ZStack {
                 StarfieldBackground()
@@ -138,9 +177,10 @@ struct TodayView: View {
                                 .glow(todayProgressFraction >= 1 ? .green : .orange, radius: 10)
                             
                             VStack(spacing: 4) {
-                                Image(systemName: "flame.fill")
-                                    .font(.system(size: 34))
-                                    .foregroundStyle(todayProgressFraction >= 1 ? .green : .orange)
+                                                                Image(systemName: "flame.fill")
+                                                                    .font(.system(size: 34))
+                                                                    .foregroundStyle(todayProgressFraction >= 1 ? .green : .orange)
+
                                 Text("\(stats.currentStreak)")
                                     .font(.system(size: 68, weight: .bold, design: .rounded))
                                     .foregroundStyle(Theme.textPrimary)
@@ -212,11 +252,35 @@ struct TodayView: View {
                     $0.scrollContentOffsetAdjustmentBehavior = .disabled
                 }
             }
+            .overlay(alignment: .topTrailing) {
+                profileBubble
+                    .padding(.top, 54)   // sotto la nav bar, non dentro
+                    .padding(.trailing, 20)
+            }
             .dismissKeyboardOnTap()
             .navigationTitle("Today")
             .navigationBarTitleDisplayMode(.inline) // titolo fisso e piccolo, sempre sopra il contenuto
             .fontDesign(.rounded)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                if isSunday {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            Haptics.tap()
+                            showWeeklyReview = true
+                        } label: {
+                            Image(systemName: "calendar")
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showProfile) {
+                ProfileView()
+            }
+            .sheet(isPresented: $showWeeklyReview) {
+                WeeklyReviewView()
+            }
             .onAppear {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.1)) {
                     appeared = true
@@ -227,12 +291,14 @@ struct TodayView: View {
                         BackupSyncService.backupStudyEntries(entries)
                     }
                 }
-                studyTimer.handleScenePhase(scenePhase)
+                studyTheoryTimer.handleScenePhase(scenePhase)
+                studyExerciseTimer.handleScenePhase(scenePhase)
                 readingTimer.handleScenePhase(scenePhase)
                 customTimer.handleScenePhase(scenePhase)
             }
             .onChange(of: scenePhase) { _, newPhase in
-                studyTimer.handleScenePhase(newPhase)
+                studyTheoryTimer.handleScenePhase(newPhase)
+                studyExerciseTimer.handleScenePhase(newPhase)
                 readingTimer.handleScenePhase(newPhase)
                 customTimer.handleScenePhase(newPhase)
             }
@@ -478,7 +544,7 @@ struct TodayView: View {
 
     private var studyFlowCard: some View {
         VStack(spacing: 12) {
-            if studyTimer.isCompleted {
+            if studyExerciseTimer.isCompleted {
                 Button {
                     Haptics.action()
                     showCamera = true
@@ -491,18 +557,60 @@ struct TodayView: View {
                         .background(Color.orange, in: RoundedRectangle(cornerRadius: 16))
                         .shadow(color: .orange.opacity(0.35), radius: 14, y: 6)
                 }
-            } else if studyTimer.isActive {
+            } else if studyExerciseTimer.isActive {
                 VStack(spacing: 12) {
-                    Text(timeLabel(studyTimer.remainingSeconds))
+                    Text("EXERCISES")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.orange)
+                    Text(timeLabel(studyExerciseTimer.remainingSeconds))
                         .font(.system(size: 40, weight: .bold, design: .rounded))
                         .foregroundStyle(Theme.textPrimary)
                         .monospacedDigit()
-                    ProgressView(value: studyTimer.progress).tint(.orange)
+                    ProgressView(value: studyExerciseTimer.progress).tint(.orange)
+                    pauseCancelRow(for: studyExerciseTimer)
+                }
+                .glassCard()
+            } else if studyTheoryTimer.isCompleted {
+                VStack(spacing: 14) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 36))
+                        .foregroundStyle(.green)
+                    Text("Theory done!")
+                        .font(.headline)
+                        .foregroundStyle(Theme.textPrimary)
+                    Text("Ready to move on to exercises?")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.textSecondary)
+                    Button {
+                        Haptics.action()
+                        let exerciseMinutes = Int(studyExerciseTimer.totalDuration / 60)
+                        let fallback = max(1, selectedDurationMinutes - Int(studyTheoryTimer.totalDuration / 60))
+                        studyExerciseTimer.start(minutes: exerciseMinutes > 0 ? exerciseMinutes : fallback)
+                    } label: {
+                        Label("Start exercises", systemImage: "pencil")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundStyle(.white)
+                            .background(Color.orange, in: RoundedRectangle(cornerRadius: 16))
+                    }
+                }
+                .glassCard()
+            } else if studyTheoryTimer.isActive {
+                VStack(spacing: 12) {
+                    Text("THEORY")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.orange)
+                    Text(timeLabel(studyTheoryTimer.remainingSeconds))
+                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                        .foregroundStyle(Theme.textPrimary)
+                        .monospacedDigit()
+                    ProgressView(value: studyTheoryTimer.progress).tint(.orange)
                     Text("Don't open any other apps or the timer will stop!")
                         .font(.caption)
                         .foregroundStyle(Theme.textSecondary)
                         .multilineTextAlignment(.center)
-                    pauseCancelRow(for: studyTimer)
+                    pauseCancelRow(for: studyTheoryTimer)
                 }
                 .glassCard()
             } else {
@@ -511,17 +619,35 @@ struct TodayView: View {
                     Text("How much today boss?")
                         .font(.subheadline)
                         .foregroundStyle(Theme.textSecondary)
-                    Picker("Last", selection: $selectedDurationMinutes) {
-                                            ForEach(Array(stride(from: 15, through: 180, by: 15)), id: \.self) { minutes in
-                                                Text(durationLabel(minutes)).tag(minutes)
-                                            }
-                                        }
+                    Picker("Total", selection: $selectedDurationMinutes) {
+                        ForEach(Array(stride(from: 15, through: 180, by: 15)), id: \.self) { minutes in
+                            Text(durationLabel(minutes)).tag(minutes)
+                        }
+                    }
                     .pickerStyle(.wheel)
                     .frame(height: 100)
+
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("Theory")
+                                .font(.caption)
+                                .foregroundStyle(Theme.textSecondary)
+                            Spacer()
+                            Text("Exercises")
+                                .font(.caption)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                        Slider(value: $studyTheoryPercent, in: 0...100, step: 5)
+                            .tint(.orange)
+                        Text("\(theoryMinutesPreview) min theory · \(exerciseMinutesPreview) min exercises")
+                            .font(.caption2)
+                            .foregroundStyle(.orange)
+                    }
+
                     Button {
                         Haptics.action()
-                        studyTimer.start(minutes: selectedDurationMinutes)
-                        } label: {
+                        studyTheoryTimer.start(minutes: max(1, theoryMinutesPreview))
+                    } label: {
                         Label("Let's start", systemImage: "timer")
                             .font(.headline)
                             .frame(maxWidth: .infinity)
@@ -536,10 +662,26 @@ struct TodayView: View {
         }
     }
 
+    private var theoryMinutesPreview: Int {
+        Int((Double(selectedDurationMinutes) * studyTheoryPercent / 100).rounded())
+    }
+
+    private var exerciseMinutesPreview: Int {
+        max(0, selectedDurationMinutes - theoryMinutesPreview)
+    }
+
     private func save(_ image: UIImage) {
         guard let fileName = ImageStore.save(image) else { return }
-        let durationMinutes = Int(studyTimer.totalDuration / 60)
-        let entry = StudyEntry(date: Date(), imageFileName: fileName, studyDurationMinutes: durationMinutes)
+        let theoryMinutes = Int(studyTheoryTimer.totalDuration / 60)
+        let exerciseMinutes = Int(studyExerciseTimer.totalDuration / 60)
+        let totalMinutes = theoryMinutes + exerciseMinutes
+        let entry = StudyEntry(
+            date: Date(),
+            imageFileName: fileName,
+            studyDurationMinutes: totalMinutes,
+            theoryMinutes: theoryMinutes,
+            exerciseMinutes: exerciseMinutes
+        )
         modelContext.insert(entry)
         try? modelContext.save()
         BackupSyncService.backupStudyEntries(entries + [entry], freshEntry: entry, freshImage: image)
@@ -547,7 +689,8 @@ struct TodayView: View {
         Haptics.success()
         refreshExternalState(newStudyEntry: entry, freshPhoto: image)
 
-        studyTimer.markConsumed()
+        studyTheoryTimer.markConsumed()
+        studyExerciseTimer.markConsumed()
         activeFlow = nil
     }
 
@@ -684,6 +827,8 @@ struct TodayView: View {
         advanceTrainingProgress(
             for: entry.muscleGroups
         )
+        
+        profiles.first?.recordPumpWorkout(muscles: entry.muscleGroups)   // ← nuovo
 
         try? modelContext.save()
 

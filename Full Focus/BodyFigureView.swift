@@ -4,10 +4,10 @@ import SwiftUI
 /// allenato per zona — stessa scala di FORGIA: grigio scuro (poco) →
 /// arancione chiaro → arancione intenso (10-20+ set, ottimale).
 struct BodyFigureView: View {
-    let weeklySets: [String: Double]
+    let pumpLevels: [String: Double]   // ← era weeklySets
     var showFront: Bool = true
 
-    private let maxSets: Double = 16
+    private let maxLevel: Double = 20
     private let strokeColor = Color(red: 0x3A/255, green: 0x32/255, blue: 0x2C/255)
     private let darkFill = Color(red: 0x2A/255, green: 0x24/255, blue: 0x20/255)
 
@@ -65,17 +65,30 @@ struct BodyFigureView: View {
     }
 
     private func color(for muscle: String) -> Color {
-        BodyFigureView.fillColor(forWeeklySets: weeklySets[muscle] ?? 0, maxSets: maxSets)
-    }
-
-    static func fillColor(forWeeklySets sets: Double, maxSets: Double) -> Color {
-        let t = min(max(sets / maxSets, 0), 1)
-        if t < 0.05 {
-            return Color(red: 0x35 / 255.0, green: 0x2D / 255.0, blue: 0x27 / 255.0)
+            BodyFigureView.fillColor(forLevel: pumpLevels[muscle] ?? 0, maxLevel: maxLevel)
         }
-        let g = (138.0 - t * 32) / 255.0
-        let b = (92.0 - t * 40) / 255.0
-        let a = 0.35 + t * 0.65
-        return Color(red: 1.0, green: g, blue: b, opacity: a)
+
+        static func fillColor(forLevel level: Double, maxLevel: Double) -> Color {
+            let t = min(max(level / maxLevel, 0), 1)
+            if t < 0.05 {
+                return Color(red: 0x35 / 255.0, green: 0x2D / 255.0, blue: 0x27 / 255.0)
+            }
+            // 0→0.6: dark → arancione (comportamento originale)
+            // 0.6→1: arancione → viola (nuovo, per i livelli alti)
+            if t < 0.6 {
+                let localT = t / 0.6
+                let g = (138.0 - localT * 32) / 255.0
+                let b = (92.0 - localT * 40) / 255.0
+                let a = 0.35 + localT * 0.65
+                return Color(red: 1.0, green: g, blue: b, opacity: a)
+            } else {
+                let localT = (t - 0.6) / 0.4
+                let orange = (r: 1.0, g: 106.0/255, b: 52.0/255)
+                let purple = (r: 0.55, g: 0.15, b: 0.85)
+                let r = orange.r + (purple.r - orange.r) * localT
+                let g = orange.g + (purple.g - orange.g) * localT
+                let b = orange.b + (purple.b - orange.b) * localT
+                return Color(red: r, green: g, blue: b)
+            }
+        }
     }
-}

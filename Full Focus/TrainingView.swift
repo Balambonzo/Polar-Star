@@ -4,6 +4,7 @@ import SwiftData
 
 struct TrainingView: View {
     @Query private var trainingEntries: [TrainingEntry]
+    @Query private var profiles: [UserProfile]   // ← nuovo
 
     @State private var showFront = true
 
@@ -68,6 +69,7 @@ struct TrainingView: View {
 
         return result
     }
+    
 
     private var totalWeeklySets: Int {
         Int(weeklySets.values.reduce(0, +))
@@ -75,6 +77,13 @@ struct TrainingView: View {
 
     private var totalWeeklyVolume: Double {
         weeklyVolume.values.reduce(0, +)
+    }
+    
+    private var pumpLevels: [String: Double] {
+        guard let profile = profiles.first else { return [:] }
+        return Dictionary(uniqueKeysWithValues: WorkoutPlan.allMuscleGroups.map {
+            ($0, profile.effectivePumpLevel(for: $0))
+        })
     }
 
     var body: some View {
@@ -106,7 +115,7 @@ struct TrainingView: View {
                             .frame(maxWidth: 200)
 
                             BodyFigureView(
-                                weeklySets: weeklySets,
+                                pumpLevels: pumpLevels,   // ← era weeklySets: weeklySets
                                 showFront: showFront
                             )
                             .frame(maxWidth: 220)

@@ -54,14 +54,8 @@ struct LibraryView: View {
                                             selectedBook = book
                                             showActions = true
                                         }
-                                        .swipeActions(edge: .leading) {
-                                            Button(role: .destructive) {
-                                                delete(book)
-                                            } label: {
-                                                Label("Delete", systemImage: "trash")
-                                            }
-                                        }
                                 }
+                                .onDelete(perform: deleteInProgress)
                                 .onMove(perform: moveInProgressBooks)
                             }
                         }
@@ -72,14 +66,8 @@ struct LibraryView: View {
                                     bookRow(book)
                                         .listRowBackground(Color.clear)
                                         .listRowSeparator(.hidden)
-                                        .swipeActions(edge: .leading) {
-                                            Button(role: .destructive) {
-                                                delete(book)
-                                            } label: {
-                                                Label("Delete", systemImage: "trash")
-                                            }
-                                        }
                                 }
+                                .onDelete(perform: deleteCompleted)
                             }
                         }
                     }
@@ -100,6 +88,11 @@ struct LibraryView: View {
                 if let book = selectedBook {
                     Button("Put on top") {
                         moveToTop(book)
+                    }
+                }
+                if let book = selectedBook {
+                    Button("Delete", role: .destructive) {
+                        delete(book)
                     }
                 }
                 Button("Exit", role: .cancel) {}
@@ -271,6 +264,22 @@ struct LibraryView: View {
     private func delete(_ book: Book) {
         modelContext.delete(book)
         try? modelContext.save()
+    }
+
+    /// Chiamato dal controllo nativo di eliminazione della List quando
+    /// l'edit mode è attivo (vedi `.environment(\.editMode, .constant(.active))`
+    /// più sotto): con edit mode forzato, gli `.swipeActions` custom non
+    /// vengono mostrati, quindi la cancellazione deve passare da qui.
+    private func deleteInProgress(at offsets: IndexSet) {
+        for index in offsets {
+            delete(inProgressBooks[index])
+        }
+    }
+
+    private func deleteCompleted(at offsets: IndexSet) {
+        for index in offsets {
+            delete(completedBooks[index])
+        }
     }
 
     private func markCompleted(_ book: Book) {

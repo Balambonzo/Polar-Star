@@ -20,6 +20,12 @@ final class TrainingWorkoutController {
     private(set) var phase: TrainingPhase = .performingSet
     private(set) var restRemainingSeconds: Int = 0
     private(set) var isCompleted: Bool = false
+    
+    private(set) var holdRemainingSeconds: Int = 0
+    private(set) var isHoldTimerActive: Bool = false
+
+    private var holdTimer: Timer?
+    private var holdEndsAt: Date?
 
     private var restTimer: Timer?
     private var restEndsAt: Date?
@@ -30,15 +36,16 @@ final class TrainingWorkoutController {
 
     deinit {
         restTimer?.invalidate()
+        holdTimer?.invalidate()
     }
 
     func start() {
         currentExerciseIndex = 0
         currentSetIndex = 0
         completedSetCount = 0
-        phase = .performingSet
         restRemainingSeconds = 0
         isCompleted = false
+        enterPerformingSet()
     }
 
     var currentExercise: ExerciseDefinition? {
@@ -60,6 +67,12 @@ final class TrainingWorkoutController {
     var restTimeLabel: String {
         let minutes = restRemainingSeconds / 60
         let seconds = restRemainingSeconds % 60
+        return String(format: "%02d:%02d", minutes, seconds)
+    }
+    
+    var holdTimeLabel: String {
+        let minutes = holdRemainingSeconds / 60
+        let seconds = holdRemainingSeconds % 60
         return String(format: "%02d:%02d", minutes, seconds)
     }
 
@@ -92,7 +105,7 @@ final class TrainingWorkoutController {
         guard phase == .resting else { return }
         stopRestTimer()
         restRemainingSeconds = 0
-        phase = .performingSet
+        enterPerformingSet()
     }
 
     /// Aggiunge secondi al recupero in corso — utile se vuoi restare
@@ -107,16 +120,30 @@ final class TrainingWorkoutController {
     /// scenePhase) — recupera il tempo di recupero passato mentre l'app
     /// era sospesa, invece di restare congelata per sempre.
     func refreshAfterForeground() {
-        guard phase == .resting, let restEndsAt else { return }
-        let remaining = Int(ceil(restEndsAt.timeIntervalSinceNow))
-        if remaining <= 0 {
-            restRemainingSeconds = 0
-            stopRestTimer()
-            phase = .performingSet
-        } else {
-            restRemainingSeconds = remaining
-            if restTimer == nil {
-                startTicking()
+        if phase == .resting, let restEndsAt {
+            let remaining = Int(ceil(restEndsAt.timeIntervalSinceNow))
+            if remaining <= 0 {
+                restRemainingSeconds = 0
+                stopRestTimer()
+                enterPerformingSet()   // ← era: phase = .performingSet
+            } else {
+                restRemainingSeconds = remaining
+                if restTimer == nil {
+                    startTicking()
+                }
+            }
+        }
+
+        if isHoldTimerActive, let holdEndsAt {
+            let remaining = Int(ceil(holdEndsAt.timeIntervalSinceNow))
+            if remaining <= 0 {
+                holdRemainingSeconds = 0
+                stopHoldTimer()
+            } else {
+                holdRemainingSeconds = remaining
+                if holdTimer == nil {
+                    startHoldTicking()
+                }
             }
         }
     }
@@ -124,6 +151,8 @@ final class TrainingWorkoutController {
     func pauseTickingForBackground() {
         restTimer?.invalidate()
         restTimer = nil
+        holdTimer?.invalidate()
+        holdTimer = nil
     }
 
     private func startRest(seconds: Int) {
@@ -133,6 +162,17 @@ final class TrainingWorkoutController {
         restRemainingSeconds = max(1, seconds)
         restEndsAt = Date().addingTimeInterval(TimeInterval(restRemainingSeconds))
         startTicking()
+    }
+    
+    private func enterPerformingSet() {
+        phase = .performingSet
+        if let exercise = currentExercise,
+           exercise.mode == .hold,
+           let target = exercise.targetHoldSeconds {
+            startHoldTimer(seconds: target)
+        } else {
+            stopHoldTimer()
+        }
     }
 
     private func startTicking() {
@@ -151,7 +191,7 @@ final class TrainingWorkoutController {
         if remaining <= 0 {
             restRemainingSeconds = 0
             stopRestTimer()
-            phase = .performingSet
+            enterPerformingSet()   // ← era: phase = .performingSet
             AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
         } else {
             restRemainingSeconds = remaining
@@ -163,9 +203,48 @@ final class TrainingWorkoutController {
         restTimer = nil
         restEndsAt = nil
     }
+    
+    private func startHoldTimer(seconds: Int) {
+        holdTimer?.invalidate()
+        holdTimer = nil
+        holdRemainingSeconds = max(1, seconds)
+        holdEndsAt = Date().addingTimeInterval(TimeInterval(holdRemainingSeconds))
+        isHoldTimerActive = true
+        startHoldTicking()
+    }
+
+    private func startHoldTicking() {
+        guard holdTimer == nil else { return }
+        holdTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            self?.tickHold()
+        }
+    }
+
+    private func tickHold() {
+        guard let holdEndsAt else {
+            stopHoldTimer()
+            return
+        }
+        let remaining = Int(ceil(holdEndsAt.timeIntervalSinceNow))
+        if remaining <= 0 {
+            holdRemainingSeconds = 0
+            stopHoldTimer()
+            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        } else {
+            holdRemainingSeconds = remaining
+        }
+    }
+
+    private func stopHoldTimer() {
+        holdTimer?.invalidate()
+        holdTimer = nil
+        holdEndsAt = nil
+        isHoldTimerActive = false
+    }
 
     func cancel() {
         stopRestTimer()
+        stopHoldTimer()
         phase = .completed
         isCompleted = false
     }

@@ -63,6 +63,50 @@ final class UserProfile {
             trainingProgressData = try? JSONEncoder().encode(newValue)
         }
     }
+    
+    // Dentro la classe UserProfile, vicino a trainingProgressData:
+    var pumpLevelsData: Data? = nil
+
+    struct MuscleLevel: Codable {
+        var level: Double        // 0...maxPumpLevel
+        var lastTrainedDate: Date
+    }
+
+    var pumpLevels: [String: MuscleLevel] {
+        get {
+            guard let data = pumpLevelsData,
+                  let dict = try? JSONDecoder().decode([String: MuscleLevel].self, from: data) else { return [:] }
+            return dict
+        }
+        set {
+            pumpLevelsData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
+    static let maxPumpLevel: Double = 20
+
+    /// Livello effettivo di un muscolo ORA, applicando il decadimento
+    /// (1 livello perso ogni 3 giorni consecutivi senza allenarlo).
+    func effectivePumpLevel(for muscle: String, now: Date = .now) -> Double {
+        guard let entry = pumpLevels[muscle] else { return 0 }
+        let days = Calendar.current.dateComponents([.day], from: entry.lastTrainedDate, to: now).day ?? 0
+        let decayed = entry.level - Double(days / 3)
+        return max(0, min(decayed, UserProfile.maxPumpLevel))
+    }
+
+    /// Da chiamare a fine workout: +1 livello per ogni muscolo coinvolto,
+    /// massimo un incremento al giorno per muscolo.
+    func recordPumpWorkout(muscles: [String], now: Date = .now) {
+        var levels = pumpLevels
+        for muscle in muscles {
+            let current = effectivePumpLevel(for: muscle, now: now)
+            let alreadyTrainedToday = levels[muscle].map { Calendar.current.isDate($0.lastTrainedDate, inSameDayAs: now) } ?? false
+            guard !alreadyTrainedToday else { continue }
+            let newLevel = min(current + 1, UserProfile.maxPumpLevel)
+            levels[muscle] = MuscleLevel(level: newLevel, lastTrainedDate: now)
+        }
+        pumpLevels = levels
+    }
 }
 
 enum UserProfileStore {
