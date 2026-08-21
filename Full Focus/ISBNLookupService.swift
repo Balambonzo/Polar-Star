@@ -19,7 +19,7 @@
 //
 //    // Chiave hardcoded per uso personale — se in futuro pubblichi l'app,
 //    // rimettila su xcconfig/Info.plist per non finire su GitHub.
-//    private static let googleBooksAPIKey = "AIzaSyDceYnhI6MXTqKWH5YsBsiu3ob9PRDoHdM"
+//    private static let googleBooksAPIKey = ""
 //
 //    static func lookup(isbn: String) async -> BookInfo? {
 //        if let result = await lookupOpenLibrary(isbn: isbn) {
@@ -96,7 +96,7 @@ enum ISBNLookupService {
 
     // Chiave hardcoded per uso personale — se in futuro pubblichi l'app,
     // rimettila su xcconfig/Info.plist per non finire su GitHub.
-    private static let googleBooksAPIKey = "AIzaSyDceYnhI6MXTqKWH5YsBsiu3ob9PRDoHdM"
+    private static let googleBooksAPIKey = ""
 
     static func lookup(isbn: String) async -> BookInfo? {
         return await lookupGoogleBooks(isbn: isbn)
